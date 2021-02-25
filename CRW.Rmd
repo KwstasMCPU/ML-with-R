@@ -1,0 +1,185 @@
+---
+title: "MATH501 Modelling and Analytics for Data Science Coursework"
+author: "Maravegias"
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+output: 
+  pdf_document:
+    number_sections: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Machine Learning Task
+
+```{r load libraries, echo=FALSE, include=FALSE}
+library(tidytext)
+library(tidyr)
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(scales)
+library(grid)
+```
+
+```{r functions to be used, echo=FALSE, include=FALSE}
+plot_gghistogram <- function(data = df_tele, 
+                             x, 
+                             x_lab = '',
+                             hue = churn, 
+                             fill_color_1 = 'black', 
+                             fill_color_2 = 'black',
+                             color_color_1 = 'tomato',
+                             color_color_2 = 'steelblue') {
+  data %>%
+    ggplot()+
+    geom_histogram(aes(x = x, fill = hue))+
+    labs(x = x_lab,
+        y = "Count",
+        fill = "Did user left?")+
+    theme(axis.text = element_text(size = 13, color = "black"),
+        axis.title = element_text(size = 13, color = "black")) +
+    scale_color_manual(values = c("yes" = fill_color_1, 
+                                "no" = fill_color_2)) +
+    scale_fill_manual(values = c("yes" = color_color_1, 
+                                "no" = color_color_2))
+}
+
+plot_boxplot <- function(data = df_tele, 
+                         y, 
+                         hue = churn,
+                         x_lab = '',
+                         y_lab = '',
+                         fill_color_1 = 'black', 
+                         fill_color_2 = 'black',
+                         color_color_1 = 'tomato',
+                         color_color_2 = 'steelblue') {
+  data %>%
+    ggplot(aes(hue, y, fill=hue))+
+    geom_boxplot(varwidth = TRUE)+
+    labs(x=x_lab,
+         y=y_lab,
+    fill = "Did user left?")+
+    theme(axis.text = element_text(size = 13, color = "black"),
+        axis.title = element_text(size = 13, color = "black")) +
+    scale_color_manual(values = c("yes" = fill_color_1, 
+                                "no" = fill_color_2)) +
+    scale_fill_manual(values = c("yes" = color_color_1, 
+                                "no" = color_color_2))+
+  stat_summary(fun = mean,
+               colour="darkblue",
+               geom = "point",
+               shape = 18,
+               size = 3,
+               show.legend = FALSE) +
+  stat_summary(fun = mean,
+               colour = "darkblue",
+               geom = "text",
+               show.legend = FALSE,
+               vjust = -0.7,
+               aes(label = round(..y.., digits = 2))) +
+  theme(legend.position = "bottom")
+}
+
+
+
+# ggplot(wages_df, aes(x = union_status, y = wage, 
+#                      colour = union_status)) +
+#   geom_boxplot(varwidth = TRUE) +
+#   geom_jitter(width = 0.05) +
+#   labs(x = "Union Status",
+#        y = "Wage (Euros)") +
+#   stat_summary(fun = mean, 
+#                colour="darkblue", 
+#                geom = "point", 
+#                shape = 18, 
+#                size = 3,
+#                show.legend = FALSE) +
+#   stat_summary(fun = mean, 
+#                colour = "darkblue", 
+#                geom = "text", 
+#                show.legend = FALSE, 
+#                vjust = -0.7, 
+#                aes(label = round(..y.., digits = 2))) +
+#   theme(legend.position = "bottom")
+
+
+get_legend<-function(myggplot){
+  tmp <- ggplot_gtable(ggplot_build(myggplot))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  legend <- tmp$grobs[[leg]]
+  return(legend)
+}
+  
+# https://stackoverflow.com/questions/12539348/ggplot-separate-legend-and-plot
+```
+
+## Data exploration
+
+```{r load file, message=FALSE, echo = FALSE, include=FALSE}
+setwd("C:/Users/kwsta/master_projects/math501")
+df_tele <- read.table("churndata.txt")
+df_tele
+attach(df_tele)
+```
+
+```{r}
+df_tele
+```
+### Summary Statistics
+
+```{r summary_stats, echo=FALSE}
+df_tele %>%
+  group_by(churn) %>%
+  summarise(mean_upload = mean(upload),
+            mean_webget = mean(webget),
+            mean_callwait = mean(callwait))
+
+summary(df_tele)
+```
+
+### Data visuals
+## Machine Learning Part (a)
+
+```{r, boxplots, echo=FALSE}
+par(mfrow = c(1,2)) # divide the graphics window into 2 columns
+boxplot(upload ~ churn, xlab = "Default", ylab = "Upload",
+col = c("lightblue", "orange"))
+boxplot(webget ~ churn, xlab = "Default", ylab = "Webget",
+col = c("lightblue", "orange"))
+par(mfrow = c(1,2))
+boxplot(enqcount ~ churn, xlab = "Default", ylab = "enqcount",
+col = c("lightblue", "orange"))
+boxplot(callwait ~ churn, xlab = "Default", ylab = "callwait",
+col = c("lightblue", "orange"))
+
+```
+
+```{r, histogram, echo=FALSE}
+
+upload_hist <- plot_gghistogram(x=upload, x_lab='Upload speed')
+webget_hist <- plot_gghistogram(x=webget, x_lab='Mean time to load a webpage')
+enqcount_hist <- plot_gghistogram(x=enqcount, x_lab='Enquiry count')
+callwait_hist <- plot_gghistogram(x=callwait, x_lab='Waited time')
+
+#ggplot(df_tele, aes(factor(enqcount, levels = c(0:7)), upload, fill= churn))+
+# geom_boxplot()
+
+upload_box <- plot_boxplot(y=upload, y_lab = 'Upload speed')
+webget_box <- plot_boxplot(y=webget, y_lab='Mean time to load a webpage')
+enqcount_box <- plot_boxplot(y=enqcount, y_lab='Enquiry count')
+callwait_box <- plot_boxplot(y=callwait, y_lab='Waited time')
+
+
+
+```
+
+```{r}
+library(lemon)
+
+# https://stackoverflow.com/questions/1249548/side-by-side-plots-with-ggplot2
+grid_arrange_shared_legend(upload_hist, webget_hist, enqcount_hist, callwait_hist, nrow = 2, ncol = 2)
+grid_arrange_shared_legend(upload_box, webget_box, enqcount_box, callwait_box, nrow = 2, ncol = 2)
+```
+
