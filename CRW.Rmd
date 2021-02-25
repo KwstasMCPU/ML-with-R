@@ -83,6 +83,28 @@ plot_boxplot <- function(data = df_tele,
 }
 
 
+plot_scatter <- function(data = df_tele, 
+                         x,
+                         y,
+                         x_lab = '',
+                         y_lab = '',
+                         hue = churn, 
+                         color_1 = 'tomato', 
+                         color_2 = 'steelblue'){
+ 
+  data %>%
+    ggplot()+
+    geom_point(aes(x = x, y = y, color = hue))+
+    labs(x = x_lab,
+         y = y_lab,
+         color = "Did user left?")+
+    theme(axis.text = element_text(size = 13, color = "black"),
+          axis.title = element_text(size = 13, color = "black"))+
+    scale_color_manual(values = c("yes" = color_1, 
+                            "no" = color_2))
+}
+
+
 
 # ggplot(wages_df, aes(x = union_status, y = wage, 
 #                      colour = union_status)) +
@@ -120,7 +142,7 @@ get_legend<-function(myggplot){
 ```{r load file, message=FALSE, echo = FALSE, include=FALSE}
 setwd("C:/Users/kwsta/master_projects/math501")
 df_tele <- read.table("churndata.txt")
-df_tele
+df_tele$churn <- as.factor(df_tele$churn) # factor from the beginning 
 attach(df_tele)
 ```
 
@@ -171,7 +193,9 @@ webget_box <- plot_boxplot(y=webget, y_lab='Mean time to load a webpage')
 enqcount_box <- plot_boxplot(y=enqcount, y_lab='Enquiry count')
 callwait_box <- plot_boxplot(y=callwait, y_lab='Waited time')
 
-
+upload_webget_scatter <- plot_scatter(x = upload, y = webget, x_lab = 'Upload speed', y_lab = 'mean load time')
+upload_callwait_scatter <- plot_scatter(x = upload, y = callwait,  x_lab = 'Upload speed', y_lab = 'Wait time')
+webget_callwait_scatter <- plot_scatter(x = webget, y = callwait, x_lab = 'Mean load time', y_lab = 'Wait time')
 
 ```
 
@@ -181,5 +205,32 @@ library(lemon)
 # https://stackoverflow.com/questions/1249548/side-by-side-plots-with-ggplot2
 grid_arrange_shared_legend(upload_hist, webget_hist, enqcount_hist, callwait_hist, nrow = 2, ncol = 2)
 grid_arrange_shared_legend(upload_box, webget_box, enqcount_box, callwait_box, nrow = 2, ncol = 2)
+upload_webget_scatter
+upload_callwait_scatter
+webget_callwait_scatter
 ```
 
+### Machine Learning Part (b)
+
+```{r}
+set.seed(1)
+df_subset <- sample(500, 350)
+
+x_train_tele <- df_tele[df_subset,-5]
+y_train_tele <- df_tele[df_subset, 5]
+
+x_test_tele <- df_tele[-df_subset,-5]
+y_test_tele <- df_tele[-df_subset, 5]
+```
+
+### Machine Learning Part (c)
+
+```{r}
+library(class)
+knn_tele <- knn( train = x_train_tele, test = x_test_tele, cl = y_train_tele, k = 1)
+```
+
+```{r}
+knn_accuracy <- mean(knn_tele == y_test_tele)
+knn_accuracy
+```
