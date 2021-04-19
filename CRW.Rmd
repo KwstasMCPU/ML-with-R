@@ -34,7 +34,7 @@ plot_gghistogram <- function(data = df_tele,
                              color_color_2 = 'steelblue') {
   data %>%
     ggplot()+
-    geom_histogram(aes(x = x, fill = hue))+
+    geom_histogram(aes(x = x, fill = hue), alpha=0.5)+
     labs(x = x_lab,
         y = "Count",
         fill = "Did user left?")+
@@ -196,6 +196,8 @@ callwait_box <- plot_boxplot(y=callwait, y_lab='Waited time')
 upload_webget_scatter <- plot_scatter(x = upload, y = webget, x_lab = 'Upload speed', y_lab = 'mean load time')
 upload_callwait_scatter <- plot_scatter(x = upload, y = callwait,  x_lab = 'Upload speed', y_lab = 'Wait time')
 webget_callwait_scatter <- plot_scatter(x = webget, y = callwait, x_lab = 'Mean load time', y_lab = 'Wait time')
+enqcount_callwait_scatter <- plot_scatter(x = enqcount, y= callwait, x_lab = 'Enquiry count', y_lab='Wait time')
+enqcount_webget_scatter <- plot_scatter(x = enqcount, y= webget, x_lab = 'Enquiry count', y_lab='Mean time to load a webpage')
 
 ```
 
@@ -208,6 +210,8 @@ grid_arrange_shared_legend(upload_box, webget_box, enqcount_box, callwait_box, n
 upload_webget_scatter
 upload_callwait_scatter
 webget_callwait_scatter
+enqcount_callwait_scatter
+enqcount_webget_scatter
 ```
 
 ### Machine Learning Part (b)
@@ -225,12 +229,41 @@ y_test_tele <- df_tele[-df_subset, 5]
 
 ### Machine Learning Part (c)
 
+Since we have variables with different scales, we should scale the data. Also since we are using KNN which uses the Euclidian distance,
+we choose normalization.
+
+
+```{r}
+normalize <- function(x) {
+return ((x - min(x)) / (max(x) - min(x)))
+}
+
+norm_x_train <- x_train_tele
+norm_y_train <- y_train_tele
+  
+norm_x_test <- x_test_tele 
+norm_y_test <- y_test_tele 
+```
+
+```{r}
+norm_x_train$upload <- normalize(norm_x_train$upload)
+norm_x_train$webget <- normalize(norm_x_train$webget)
+norm_x_train$callwait <- normalize(norm_x_train$callwait)
+norm_x_test$upload <- normalize(norm_x_test$upload)
+norm_x_test$webget <- normalize(norm_x_test$webget)
+norm_x_test$callwait <- normalize(norm_x_test$callwait)
+```
+
 ```{r}
 library(class)
 knn_tele <- knn( train = x_train_tele, test = x_test_tele, cl = y_train_tele, k = 1)
+knn_tele_normalized <- knn( train = norm_x_train, test = norm_x_test, cl = norm_y_train, k = 1)
 ```
 
 ```{r}
 knn_accuracy <- mean(knn_tele == y_test_tele)
 knn_accuracy
+
+norm_knn_accuracy <- mean(knn_tele_normalized == norm_y_test)
+norm_knn_accuracy
 ```
