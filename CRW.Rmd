@@ -256,14 +256,30 @@ norm_x_test$callwait <- normalize(norm_x_test$callwait)
 
 ```{r}
 library(class)
-knn_tele <- knn( train = x_train_tele, test = x_test_tele, cl = y_train_tele, k = 1)
-knn_tele_normalized <- knn( train = norm_x_train, test = norm_x_test, cl = norm_y_train, k = 1)
+knn_tele <- function(train=x_train_tele,
+                     test=x_test_tele,
+                     cl=y_train_tele,
+                     k=1){
+  knn( train = train, test = test, cl = cl, k = k)
+}
 ```
 
 ```{r}
-knn_accuracy <- mean(knn_tele == y_test_tele)
+knn_accuracy <- mean(knn_tele() == y_test_tele)
 knn_accuracy
 
-norm_knn_accuracy <- mean(knn_tele_normalized == norm_y_test)
+norm_knn_accuracy <- mean(knn_tele(norm_x_train, norm_x_test, norm_y_train) == norm_y_test)
 norm_knn_accuracy
+```
+```{r cross_validation}
+cross_knn_error <- c()
+for(i in 1:100){
+  cross_knn <- knn.cv(norm_x_train, norm_y_train, k = i, l = 0, prob = FALSE, use.all = TRUE)
+  cross_knn_error[i] <- mean(cross_knn != norm_y_train)
+}
+```
+
+```{r}
+plot(cross_knn_error[1:20], xlab = 'k', ylab = 'Error')
+
 ```
