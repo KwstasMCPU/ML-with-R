@@ -257,9 +257,9 @@ norm_x_test$callwait <- normalize(norm_x_test$callwait)
 
 ```{r}
 library(class)
-knn_tele <- function(train=x_train_tele,
-                     test=x_test_tele,
-                     cl=y_train_tele,
+knn_tele <- function(train=norm_x_train,
+                     test=norm_x_test,
+                     cl=norm_y_train,
                      k=1){
   knn( train = train, test = test, cl = cl, k = k)
 }
@@ -274,6 +274,7 @@ norm_knn_accuracy
 ```
 ```{r cross_validation}
 cross_knn_error <- c()
+set.seed(1)
 for(i in 1:100){
   cross_knn <- knn.cv(norm_x_train, norm_y_train, k = i, l = 0, prob = FALSE, use.all = TRUE)
   cross_knn_error[i] <- mean(cross_knn != norm_y_train)
@@ -283,4 +284,27 @@ for(i in 1:100){
 ```{r}
 plot(cross_knn_error[1:20], xlab = 'k', ylab = 'Error')
 
+```
+
+```{r knn_with_best_k}
+best_knn <- knn_tele(k=5)
+best_acc <- mean(best_knn == norm_y_test)
+best_acc
+table(best_knn, norm_y_test)
+```
+## Machine Learning part (d)
+
+```{r machine_learning_part_d}
+library(randomForest)
+set.seed(1)
+train_df <- cbind(x_train_tele, y_train_tele)
+bag_tree_train <-randomForest(formula = y_train_tele ~., data=train_df, mtry=4, importance=TRUE)
+varImpPlot(bag_tree_train)
+```
+
+```{r}
+bag_tree_pred <- predict(bag_tree_train, newdata = x_test_tele)
+bag_tree_train_acc <- mean(bag_tree_pred == y_test_tele)
+bag_tree_train_acc
+table(bag_tree_pred, y_test_tele)
 ```
