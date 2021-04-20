@@ -229,8 +229,9 @@ y_test_tele <- df_tele[-df_subset, 5]
 
 ### Machine Learning Part (c)
 
-Since we have variables with different scales, we should scale the data. Also since we are using KNN which uses the Euclidian distance,
-we choose normalization.
+KNN classifier makes predictions based on the Euclidean distance, thus the scale
+of the variables matters.
+Since we do not know the scales of our variables, its wise to normalize our data.
 
 
 ```{r}
