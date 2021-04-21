@@ -230,8 +230,13 @@ y_test_tele <- df_tele[-df_subset, 5]
 ### Machine Learning Part (c)
 
 KNN classifier makes predictions based on the Euclidean distance, thus the scale
-of the variables matters.
-Since we do not know the scales of our variables, its wise to normalize our data.
+of the variables matter. If we do not, variables with high variance (wider range),
+will effect more the Euclidean distance and appear to be more important factor for
+determining the target value.
+Since we do not know the scales of our variables, its wise to scale our data.
+However, since our variables always get positive numbers as values, we used the 
+max-min normalization. However we have to keep in mind normalization does not
+handle the outlines well.
 
 
 ```{r}
@@ -240,44 +245,47 @@ return ((x - min(x)) / (max(x) - min(x)))
 }
 
 norm_x_train <- x_train_tele
-norm_y_train <- y_train_tele
+
   
 norm_x_test <- x_test_tele 
-norm_y_test <- y_test_tele 
+
 ```
 
 ```{r}
 norm_x_train$upload <- normalize(norm_x_train$upload)
 norm_x_train$webget <- normalize(norm_x_train$webget)
 norm_x_train$callwait <- normalize(norm_x_train$callwait)
+norm_x_train$enqcount <- normalize(norm_x_train$enqcount)
 norm_x_test$upload <- normalize(norm_x_test$upload)
 norm_x_test$webget <- normalize(norm_x_test$webget)
 norm_x_test$callwait <- normalize(norm_x_test$callwait)
+norm_x_test$enqcount <- normalize(norm_x_test$enqcount)
 ```
 
 ```{r}
 library(class)
 knn_tele <- function(train=norm_x_train,
                      test=norm_x_test,
-                     cl=norm_y_train,
+                     cl=y_train_tele,
                      k=1){
   knn( train = train, test = test, cl = cl, k = k)
 }
 ```
 
 ```{r}
-knn_accuracy <- mean(knn_tele() == y_test_tele)
+knn_accuracy <- mean(knn_tele(x_train_tele, x_test_tele, y_train_tele) == y_test_tele)
 knn_accuracy
 
-norm_knn_accuracy <- mean(knn_tele(norm_x_train, norm_x_test, norm_y_train) == norm_y_test)
+norm_knn_accuracy <- mean(knn_tele(norm_x_train, norm_x_test, norm_y_train) == y_test_tele)
 norm_knn_accuracy
 ```
+
 ```{r cross_validation}
 cross_knn_error <- c()
 set.seed(1)
 for(i in 1:100){
   cross_knn <- knn.cv(norm_x_train, norm_y_train, k = i, l = 0, prob = FALSE, use.all = TRUE)
-  cross_knn_error[i] <- mean(cross_knn != norm_y_train)
+  cross_knn_error[i] <- mean(cross_knn != y_train_tele)
 }
 ```
 
@@ -288,9 +296,9 @@ plot(cross_knn_error[1:20], xlab = 'k', ylab = 'Error')
 
 ```{r knn_with_best_k}
 best_knn <- knn_tele(k=5)
-best_acc <- mean(best_knn == norm_y_test)
+best_acc <- mean(best_knn == y_test_tele)
 best_acc
-table(best_knn, norm_y_test)
+table(best_knn, y_test_tele)
 ```
 ## Machine Learning part (d)
 
@@ -307,4 +315,28 @@ bag_tree_pred <- predict(bag_tree_train, newdata = x_test_tele)
 bag_tree_train_acc <- mean(bag_tree_pred == y_test_tele)
 bag_tree_train_acc
 table(bag_tree_pred, y_test_tele)
+```
+
+```{r part_e_PCA}
+norm_df_train <- cbind(norm_x_train, norm_y_train)
+colnames(norm_df_train)[5] <- 'churn'
+norm_df_test <- cbind(norm_x_test, norm_y_test)
+colnames(norm_df_test)[5] <- 'churn'
+norm_df_full <- rbind(norm_df_train, norm_df_test)
+tele_pca <- princomp(norm_df_full[,-5], cor = TRUE)
+summary(tele_pca)
+plot(tele_pca)
+comp_1 <- tele_pca$scores[,1]
+comp_2 <- tele_pca$scores[,2]
+```
+
+```{r}
+comp_df <- cbind(comp_1, comp_2, norm_df_full[5])
+
+plot_scatter(data=comp_df, x=comp_1, y=comp_2, x_lab = 'Comp.1', y_lab = 'Comp.2')
+```
+
+```{r f}
+
+
 ```
