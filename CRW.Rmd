@@ -11,9 +11,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Machine Learning Task
-
-```{r load libraries, echo=FALSE, include=FALSE}
+```{r load libraries, include=FALSE, message = FALSE}
 library(tidytext)
 library(tidyr)
 library(readr)
@@ -21,9 +19,10 @@ library(dplyr)
 library(ggplot2)
 library(scales)
 library(grid)
+library(lemon)
 ```
 
-```{r functions to be used, echo=FALSE, include=FALSE}
+```{r functions to be used, include=FALSE}
 plot_gghistogram <- function(data = df_tele, 
                              x, 
                              x_lab = '',
@@ -136,22 +135,23 @@ get_legend<-function(myggplot){
   
 # https://stackoverflow.com/questions/12539348/ggplot-separate-legend-and-plot
 ```
+# Machine Learning Task
 
 ## Data exploration
 
-```{r load file, message=FALSE, echo = FALSE, include=FALSE}
+```{r load file, message=FALSE, include=FALSE}
 setwd("C:/Users/kwsta/master_projects/math501")
 df_tele <- read.table("churndata.txt")
-df_tele$churn <- as.factor(df_tele$churn) # factor from the beginning 
+df_tele$churn <- as.factor(df_tele$churn) # converting churn to a factor variables
 attach(df_tele)
 ```
 
-```{r}
-df_tele
+```{r show_df_head, echo=FALSE}
+head(df_tele)
 ```
 ### Summary Statistics
 
-```{r summary_stats, echo=FALSE}
+```{r summary_stats, echo=FALSE, warning=FALSE, message=FALSE}
 df_tele %>%
   group_by(churn) %>%
   summarise(mean_upload = mean(upload),
@@ -160,33 +160,31 @@ df_tele %>%
 
 summary(df_tele)
 ```
+From the tables above we can notice that there is a difference in the means of the
+customers who switched to another telecommunication provider.
 
-### Data visuals
 ## Machine Learning Part (a)
 
-```{r, boxplots, echo=FALSE}
-par(mfrow = c(1,2)) # divide the graphics window into 2 columns
-boxplot(upload ~ churn, xlab = "Default", ylab = "Upload",
-col = c("lightblue", "orange"))
-boxplot(webget ~ churn, xlab = "Default", ylab = "Webget",
-col = c("lightblue", "orange"))
-par(mfrow = c(1,2))
-boxplot(enqcount ~ churn, xlab = "Default", ylab = "enqcount",
-col = c("lightblue", "orange"))
-boxplot(callwait ~ churn, xlab = "Default", ylab = "callwait",
-col = c("lightblue", "orange"))
+<!-- # ```{r, boxplots, echo=FALSE} -->
+<!-- # par(mfrow = c(1,2)) # divide the graphics window into 2 columns -->
+<!-- # boxplot(upload ~ churn, xlab = "Default", ylab = "Upload", -->
+<!-- # col = c("lightblue", "orange")) -->
+<!-- # boxplot(webget ~ churn, xlab = "Default", ylab = "Webget", -->
+<!-- # col = c("lightblue", "orange")) -->
+<!-- # par(mfrow = c(1,2)) -->
+<!-- # boxplot(enqcount ~ churn, xlab = "Default", ylab = "enqcount", -->
+<!-- # col = c("lightblue", "orange")) -->
+<!-- # boxplot(callwait ~ churn, xlab = "Default", ylab = "callwait", -->
+<!-- # col = c("lightblue", "orange")) -->
+<!-- #  -->
+<!-- # ``` -->
 
-```
-
-```{r, histogram, echo=FALSE}
+```{r initializing_the_plots, echo=FALSE}
 
 upload_hist <- plot_gghistogram(x=upload, x_lab='Upload speed')
 webget_hist <- plot_gghistogram(x=webget, x_lab='Mean time to load a webpage')
 enqcount_hist <- plot_gghistogram(x=enqcount, x_lab='Enquiry count')
 callwait_hist <- plot_gghistogram(x=callwait, x_lab='Waited time')
-
-#ggplot(df_tele, aes(factor(enqcount, levels = c(0:7)), upload, fill= churn))+
-# geom_boxplot()
 
 upload_box <- plot_boxplot(y=upload, y_lab = 'Upload speed')
 webget_box <- plot_boxplot(y=webget, y_lab='Mean time to load a webpage')
@@ -201,22 +199,18 @@ enqcount_webget_scatter <- plot_scatter(x = enqcount, y= webget, x_lab = 'Enquir
 
 ```
 
-```{r}
-library(lemon)
+```{r ploting, echo=FALSE, message=FALSE }
 
-# https://stackoverflow.com/questions/1249548/side-by-side-plots-with-ggplot2
 grid_arrange_shared_legend(upload_hist, webget_hist, enqcount_hist, callwait_hist, nrow = 2, ncol = 2)
 grid_arrange_shared_legend(upload_box, webget_box, enqcount_box, callwait_box, nrow = 2, ncol = 2)
-upload_webget_scatter
-upload_callwait_scatter
-webget_callwait_scatter
-enqcount_callwait_scatter
+grid_arrange_shared_legend(upload_webget_scatter, upload_callwait_scatter, webget_callwait_scatter, enqcount_callwait_scatter,nrow = 2, ncol = 2)
 enqcount_webget_scatter
+# https://stackoverflow.com/questions/1249548/side-by-side-plots-with-ggplot2
 ```
 
-### Machine Learning Part (b)
+## Machine Learning Part (b)
 
-```{r}
+```{r train_test_split, echo=FALSE}
 set.seed(1)
 df_subset <- sample(500, 350)
 
@@ -225,9 +219,12 @@ y_train_tele <- df_tele[df_subset, 5]
 
 x_test_tele <- df_tele[-df_subset,-5]
 y_test_tele <- df_tele[-df_subset, 5]
+
+head(x_train_tele)
+head(y_train_tele)
 ```
 
-### Machine Learning Part (c)
+## Machine Learning Part (c)
 
 KNN classifier makes predictions based on the Euclidean distance, thus the scale
 of the variables matter. If we do not, variables with high variance (wider range),
@@ -238,14 +235,20 @@ However, since our variables always get positive numbers as values, we used the
 max-min normalization. However we have to keep in mind normalization does not
 handle the outlines well.
 
+$$
+x' =\frac{x - min(x)}{max(x)-min(x)}
+$$
+Where:
+- $x'$: the normalized value
+- $x$: the original value
 
-```{r}
+
+```{r min_max_normalizer, include=FALSE}
 normalize <- function(x) {
 return ((x - min(x)) / (max(x) - min(x)))
 }
 
 norm_x_train <- x_train_tele
-
   
 norm_x_test <- x_test_tele 
 
@@ -276,7 +279,7 @@ knn_tele <- function(train=norm_x_train,
 knn_accuracy <- mean(knn_tele(x_train_tele, x_test_tele, y_train_tele) == y_test_tele)
 knn_accuracy
 
-norm_knn_accuracy <- mean(knn_tele(norm_x_train, norm_x_test, norm_y_train) == y_test_tele)
+norm_knn_accuracy <- mean(knn_tele(norm_x_train, norm_x_test, y_train_tele) == y_test_tele)
 norm_knn_accuracy
 ```
 
@@ -284,7 +287,7 @@ norm_knn_accuracy
 cross_knn_error <- c()
 set.seed(1)
 for(i in 1:100){
-  cross_knn <- knn.cv(norm_x_train, norm_y_train, k = i, l = 0, prob = FALSE, use.all = TRUE)
+  cross_knn <- knn.cv(norm_x_train, y_train_tele, k = i, l = 0, prob = FALSE, use.all = TRUE)
   cross_knn_error[i] <- mean(cross_knn != y_train_tele)
 }
 ```
@@ -318,9 +321,9 @@ table(bag_tree_pred, y_test_tele)
 ```
 
 ```{r part_e_PCA}
-norm_df_train <- cbind(norm_x_train, norm_y_train)
+norm_df_train <- cbind(norm_x_train, y_train_tele)
 colnames(norm_df_train)[5] <- 'churn'
-norm_df_test <- cbind(norm_x_test, norm_y_test)
+norm_df_test <- cbind(norm_x_test, y_test_tele)
 colnames(norm_df_test)[5] <- 'churn'
 norm_df_full <- rbind(norm_df_train, norm_df_test)
 tele_pca <- princomp(norm_df_full[,-5], cor = TRUE)
