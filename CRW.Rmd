@@ -335,11 +335,41 @@ comp_2 <- tele_pca$scores[,2]
 
 ```{r}
 comp_df <- cbind(comp_1, comp_2, norm_df_full[5])
-
-plot_scatter(data=comp_df, x=comp_1, y=comp_2, x_lab = 'Comp.1', y_lab = 'Comp.2')
+p<-comp_df %>%
+  ggplot()+
+  geom_point(aes(x=comp_1, y = comp_2, color=churn)) +
+  labs(x = "First Principal Component",
+       y = "Second Principal Component") +
+  coord_fixed(ratio = 1)
+p
 ```
+The information preserved in this plot equals to the proportion of the variances 
+of the two components so is 72.5%
 
 ```{r f}
+comp_df_train <- comp_df[df_subset,]
+comp_df_test <- comp_df[-df_subset,]
 
+comp_forest <-randomForest(formula = churn ~., data=comp_df_train, mtry=2, importance=TRUE)
+comp_forest_pred <- predict(comp_forest, newdata = comp_df_test[,-3])
+comp_forest_acc <- mean(comp_forest_pred == comp_df_test[,3])
+comp_forest_acc
+table(comp_forest_pred, comp_df_test[,3])
+```
+```{r}
+comp_df_test$predictions <-comp_forest_pred
 
+comp_df_test%>%
+ggplot()+
+  geom_point(aes(x=comp_1, y = comp_2, color=predictions)) +
+  labs(x = "First Principal Component",
+       y = "Second Principal Component") +
+  coord_fixed(ratio = 1)
+
+comp_df_test%>%
+ggplot()+
+  geom_point(aes(x=comp_1, y = comp_2, color=churn)) +
+  labs(x = "First Principal Component",
+       y = "Second Principal Component") +
+  coord_fixed(ratio = 1)
 ```
