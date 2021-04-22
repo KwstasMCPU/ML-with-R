@@ -143,7 +143,6 @@ get_legend<-function(myggplot){
 setwd("C:/Users/kwsta/master_projects/math501")
 df_tele <- read.table("churndata.txt")
 df_tele$churn <- as.factor(df_tele$churn) # converting churn to a factor variables
-attach(df_tele)
 ```
 
 ```{r show_df_head, echo=FALSE}
@@ -162,6 +161,10 @@ summary(df_tele)
 ```
 From the tables above we can notice that there is a difference in the means of the
 customers who switched to another telecommunication provider.
+
+Furthermore it is important to say. that we have an imbalanced data set. Meaning 
+that the customers who switched provider are way less than those who do not.
+This affects our algorithm.
 
 ## Machine Learning Part (a)
 
@@ -214,33 +217,30 @@ enqcount_webget_scatter
 set.seed(1)
 df_subset <- sample(500, 350)
 
-x_train_tele <- df_tele[df_subset,-5]
-y_train_tele <- df_tele[df_subset, 5]
+df_train_tele <- df_tele[df_subset,]
+df_test_tele <- df_tele[-df_subset,]
 
-x_test_tele <- df_tele[-df_subset,-5]
-y_test_tele <- df_tele[-df_subset, 5]
-
-head(x_train_tele)
-head(y_train_tele)
+head(df_train_tele)
+head(df_train_tele)
 ```
 
 ## Machine Learning Part (c)
 
 KNN classifier makes predictions based on the Euclidean distance, thus the scale
-of the variables matter. If we do not, variables with high variance (wider range),
-will effect more the Euclidean distance and appear to be more important factor for
-determining the target value.
+of the variables matter. If we do not scale the data, variables with high variance (wider range),
+will effect more the Euclidean distance and will appear to be more important for
+the determination the target value.
 Since we do not know the scales of our variables, its wise to scale our data.
 However, since our variables always get positive numbers as values, we used the 
-max-min normalization. However we have to keep in mind normalization does not
+max-min normalization. We have to keep in mind normalization does not
 handle the outlines well.
 
 $$
 x' =\frac{x - min(x)}{max(x)-min(x)}
 $$
 Where:
-- $x'$: the normalized value
-- $x$: the original value
+ - $x'$: the normalized value
+ - $x$: the original value
 
 
 ```{r min_max_normalizer, include=FALSE}
@@ -248,61 +248,58 @@ normalize <- function(x) {
 return ((x - min(x)) / (max(x) - min(x)))
 }
 
-norm_x_train <- x_train_tele
-  
-norm_x_test <- x_test_tele 
+df_train_tele_norm <- normalize(df_train_tele[,-5])
+df_train_tele_norm$churn <- df_train_tele$churn
+
+df_test_tele_norm <- normalize(df_test_tele[,-5])
+df_test_tele_norm$churn <- df_test_tele$churn
 
 ```
 
-```{r}
-norm_x_train$upload <- normalize(norm_x_train$upload)
-norm_x_train$webget <- normalize(norm_x_train$webget)
-norm_x_train$callwait <- normalize(norm_x_train$callwait)
-norm_x_train$enqcount <- normalize(norm_x_train$enqcount)
-norm_x_test$upload <- normalize(norm_x_test$upload)
-norm_x_test$webget <- normalize(norm_x_test$webget)
-norm_x_test$callwait <- normalize(norm_x_test$callwait)
-norm_x_test$enqcount <- normalize(norm_x_test$enqcount)
-```
 
-```{r}
-library(class)
-knn_tele <- function(train=norm_x_train,
-                     test=norm_x_test,
-                     cl=y_train_tele,
-                     k=1){
-  knn( train = train, test = test, cl = cl, k = k)
-}
-```
-
-```{r}
-knn_accuracy <- mean(knn_tele(x_train_tele, x_test_tele, y_train_tele) == y_test_tele)
-knn_accuracy
-
-norm_knn_accuracy <- mean(knn_tele(norm_x_train, norm_x_test, y_train_tele) == y_test_tele)
-norm_knn_accuracy
-```
-
-```{r cross_validation}
-cross_knn_error <- c()
+```{r cross_validation, include=FALSE}
 set.seed(1)
+cross_knn_error <- c()
+error <- c()
 for(i in 1:100){
-  cross_knn <- knn.cv(norm_x_train, y_train_tele, k = i, l = 0, prob = FALSE, use.all = TRUE)
-  cross_knn_error[i] <- mean(cross_knn != y_train_tele)
+  cross_knn <- knn.cv(df_train_tele_norm[,-5], df_train_tele_norm[,5], k = i, l = 0, prob = FALSE, use.all = TRUE)
+  cross_knn_error[i] <- mean(cross_knn != df_train_tele_norm[,5])
 }
 ```
 
-```{r}
-plot(cross_knn_error[1:20], xlab = 'k', ylab = 'Error')
+```{r plot_errors, echo=FALSE}
+plot(cross_knn_error[1:30], xlab = 'k', ylab = 'Error')
 
 ```
+According to the graph, for k=1 or k=7 we have the same error,
+however it is important to check the confusion matrix.
 
-```{r knn_with_best_k}
-best_knn <- knn_tele(k=5)
-best_acc <- mean(best_knn == y_test_tele)
+```{r knn_with_best_k, echo=FALSE}
+set.seed(1)
+normalized_knn <- knn(train = df_train_tele_norm[,-5], 
+                      test = df_test_tele_norm[,-5], 
+                      cl=df_train_tele_norm$churn, 
+                      k=1)
+
+
+norm_knn_accuracy <- mean(normalized_knn == df_test_tele_norm$churn)
+norm_knn_accuracy
+
+best_knn <- knn(train = df_train_tele_norm[,-5], 
+                test = df_test_tele_norm[,-5], 
+                cl=df_train_tele_norm$churn, 
+                k=7)
+
+best_acc <- mean(best_knn == df_test_tele_norm$churn)
 best_acc
-table(best_knn, y_test_tele)
+table(normalized_knn, df_test_tele_norm$churn)
+table(best_knn, df_test_tele_norm$churn)
 ```
+We notice that for the both values of k, the algorithm struggles to predict
+correct the values of yes, while the majority of the values are assigned as no.
+That is an issue resulted from the imbalance of our set.
+
+We prefer the value for k=1, since predicts better those who switched provider.
 ## Machine Learning part (d)
 
 ```{r machine_learning_part_d}
