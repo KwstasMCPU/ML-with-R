@@ -276,8 +276,7 @@ for(i in 1:100){
 ```
 
 ```{r plot_errors, echo=FALSE}
-plot(cross_knn_error[1:30], xlab = 'k', ylab = 'Error')
-
+plot(cross_knn_error[1:30], xlab = 'k', ylab = 'Error', col = 'blue')
 ```
 According to the graph, for k=1 or k=7 we have the same error,
 however it is important to check the confusion matrix.
@@ -351,6 +350,8 @@ p<-new_variables %>%
        y = "Second Principal Component") +
   coord_fixed(ratio = 1)
 p
+
+plot(new_variables$Comp.1, new_variables$Comp.2)
 ```
 The information preserved in this plot equals to the proportion of the variances 
 of the two components so is 73.5%
