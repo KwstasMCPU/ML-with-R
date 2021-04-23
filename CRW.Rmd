@@ -223,7 +223,7 @@ df_train_tele <- df_tele[df_subset,]
 df_test_tele <- df_tele[-df_subset,]
 
 head(df_train_tele)
-head(df_train_tele)
+head(df_test_tele)
 ```
 
 ## Machine Learning Part (c)
@@ -265,7 +265,12 @@ set.seed(1)
 cross_knn_error <- c()
 error <- c()
 for(i in 1:100){
-  cross_knn <- knn.cv(df_train_tele_norm[,-5], df_train_tele_norm[,5], k = i, l = 0, prob = FALSE, use.all = TRUE)
+  cross_knn <- knn.cv(df_train_tele_norm[,-5], 
+                      df_train_tele_norm[,5], 
+                      k = i, 
+                      l = 0, 
+                      prob = FALSE, 
+                      use.all = TRUE)
   cross_knn_error[i] <- mean(cross_knn != df_train_tele_norm[,5])
 }
 ```
@@ -303,72 +308,92 @@ correct the values of yes, while the majority of the values are assigned as no.
 That is an issue resulted from the imbalance of our set.
 
 We prefer the value for k=1, since predicts better those who switched provider.
-## Machine Learning part (d)
 
+## Machine Learning part (d)
 ```{r machine_learning_part_d, echo=FALSE}
 library(randomForest)
 set.seed(1)
-bag_tree_train <-randomForest(formula =  df_train_tele[,5] ~., data=df_train_tele, mtry=4, importance=TRUE, tree=10)
+bag_tree_train <-randomForest(formula =  df_train_tele[,5] ~., 
+                              data=df_train_tele[,-5], 
+                              mtry=4, 
+                              importance=TRUE,
+                              ntree=500)
 varImpPlot(bag_tree_train)
+importance(bag_tree_train) 
 ```
 
-```{r}
+```{r random_forest_acc, echo=FALSE}
 bag_tree_pred <- predict(bag_tree_train, newdata = df_test_tele)
 bag_tree_train_acc <- mean(bag_tree_pred == df_test_tele[,5])
 bag_tree_train_acc
 table(bag_tree_pred, df_test_tele[,5])
 ```
 
-```{r part_e_PCA}
-norm_df_train <- cbind(norm_x_train, y_train_tele)
-colnames(norm_df_train)[5] <- 'churn'
-norm_df_test <- cbind(norm_x_test, y_test_tele)
-colnames(norm_df_test)[5] <- 'churn'
-norm_df_full <- rbind(norm_df_train, norm_df_test)
-tele_pca <- princomp(norm_df_full[,-5], cor = TRUE)
+## Machine Learning Part (e)
+```{r part_e_PCA, echo=FALSE}
+
+df_tele_norm <- normalize(df_tele[,-5])
+df_tele_norm$churn <- df_tele$churn
+
+tele_pca <- princomp(df_tele_norm[,-5], cor = TRUE)
 summary(tele_pca)
 plot(tele_pca)
-comp_1 <- tele_pca$scores[,1]
-comp_2 <- tele_pca$scores[,2]
 ```
 
-```{r}
-comp_df <- cbind(comp_1, comp_2, norm_df_full[5])
-p<-comp_df %>%
+```{r ploting_comp1_v_comp2, echo=FALSE}
+new_variables <- tele_pca$scores[,1:2]
+new_variables <- data.frame(new_variables)
+new_variables$churn <- as.factor(df_tele_norm$churn)
+p<-new_variables %>%
   ggplot()+
-  geom_point(aes(x=comp_1, y = comp_2, color=churn)) +
+  geom_point(aes(x=Comp.1, y = Comp.2, color=churn)) +
   labs(x = "First Principal Component",
        y = "Second Principal Component") +
   coord_fixed(ratio = 1)
 p
 ```
 The information preserved in this plot equals to the proportion of the variances 
-of the two components so is 72.5%
+of the two components so is 73.5%
 
-```{r f}
-comp_df_train <- comp_df[df_subset,]
-comp_df_test <- comp_df[-df_subset,]
 
-comp_forest <-randomForest(formula = churn ~., data=comp_df_train, mtry=2, importance=TRUE)
+## Machine Learning Part (f)
+```{r random_forest_with_comp1_comp2, echo=FALSE}
+# splitting the data
+comp_df_train <- new_variables[df_subset,]
+comp_df_test <- new_variables[-df_subset,]
+
+comp_forest <-randomForest(formula = churn ~., 
+                           data=comp_df_train, 
+                           mtry=2, 
+                           importance=TRUE)
+
+varImpPlot(comp_forest)
+importance(comp_forest) 
+````
+
+```{r model_acc, echo=FALSE}
 comp_forest_pred <- predict(comp_forest, newdata = comp_df_test[,-3])
 comp_forest_acc <- mean(comp_forest_pred == comp_df_test[,3])
 comp_forest_acc
 table(comp_forest_pred, comp_df_test[,3])
 ```
-```{r}
+
+```{r visulization_of_classification, echo=FALSE}
 comp_df_test$predictions <-comp_forest_pred
 
 comp_df_test%>%
 ggplot()+
-  geom_point(aes(x=comp_1, y = comp_2, color=predictions)) +
+  geom_point(aes(x=Comp.1, y = Comp.2, color=predictions)) +
   labs(x = "First Principal Component",
-       y = "Second Principal Component") +
+       y = "Second Principal Component",
+       title = 'Predictions') +
   coord_fixed(ratio = 1)
 
 comp_df_test%>%
 ggplot()+
-  geom_point(aes(x=comp_1, y = comp_2, color=churn)) +
+  geom_point(aes(x=Comp.1, y = Comp.2, color=churn)) +
   labs(x = "First Principal Component",
-       y = "Second Principal Component") +
+       y = "Second Principal Component",
+       title = 'Actual') +
   coord_fixed(ratio = 1)
 ```
