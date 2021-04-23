@@ -369,7 +369,7 @@ comp_forest <-randomForest(formula = churn ~.,
 
 varImpPlot(comp_forest)
 importance(comp_forest) 
-````
+```
 
 ```{r model_acc, echo=FALSE}
 comp_forest_pred <- predict(comp_forest, newdata = comp_df_test[,-3])
@@ -396,4 +396,31 @@ ggplot()+
        y = "Second Principal Component",
        title = 'Actual') +
   coord_fixed(ratio = 1)
+```
+
+
+```{r}
+len <- 12 
+xp <- seq(-2.5, 6, length = len) 
+yp <- seq(-2.5, 4, length = len) 
+xygrid <- expand.grid(Comp.1 = xp, Comp.2 = yp)
+
+col3 <- rep("lightgreen", len*len) 
+
+for(i in 1:(len*len)){
+   if(comp_forest_pred[i]== 'Yes'){ 
+     col3[i] <- "blue" 
+   } else {
+     col3[i] <- "red"
+   }
+}
+
+
+plot(xygrid, col = col3, main = "Tree", xlab = "pressure", ylab = "wind") 
+
+# abline( h = c(62.5, 32.5))
+# lines( x = c(985.5, 985.5), y = c(32.5, 62.5))
+# 
+# points(pressure, wind, col = cols, pch = 16)
+
 ```
