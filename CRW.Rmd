@@ -143,6 +143,7 @@ get_legend<-function(myggplot){
 setwd("C:/Users/kwsta/master_projects/math501")
 df_tele <- read.table("churndata.txt")
 df_tele$churn <- as.factor(df_tele$churn) # converting churn to a factor variables
+attach(df_tele)
 ```
 
 ```{r show_df_head, echo=FALSE}
@@ -209,6 +210,7 @@ grid_arrange_shared_legend(upload_box, webget_box, enqcount_box, callwait_box, n
 grid_arrange_shared_legend(upload_webget_scatter, upload_callwait_scatter, webget_callwait_scatter, enqcount_callwait_scatter,nrow = 2, ncol = 2)
 enqcount_webget_scatter
 # https://stackoverflow.com/questions/1249548/side-by-side-plots-with-ggplot2
+detach(df_tele)
 ```
 
 ## Machine Learning Part (b)
@@ -258,6 +260,7 @@ df_test_tele_norm$churn <- df_test_tele$churn
 
 
 ```{r cross_validation, include=FALSE}
+library(class)
 set.seed(1)
 cross_knn_error <- c()
 error <- c()
@@ -302,19 +305,18 @@ That is an issue resulted from the imbalance of our set.
 We prefer the value for k=1, since predicts better those who switched provider.
 ## Machine Learning part (d)
 
-```{r machine_learning_part_d}
+```{r machine_learning_part_d, echo=FALSE}
 library(randomForest)
 set.seed(1)
-train_df <- cbind(x_train_tele, y_train_tele)
-bag_tree_train <-randomForest(formula = y_train_tele ~., data=train_df, mtry=4, importance=TRUE)
+bag_tree_train <-randomForest(formula =  df_train_tele[,5] ~., data=df_train_tele, mtry=4, importance=TRUE, tree=10)
 varImpPlot(bag_tree_train)
 ```
 
 ```{r}
-bag_tree_pred <- predict(bag_tree_train, newdata = x_test_tele)
-bag_tree_train_acc <- mean(bag_tree_pred == y_test_tele)
+bag_tree_pred <- predict(bag_tree_train, newdata = df_test_tele)
+bag_tree_train_acc <- mean(bag_tree_pred == df_test_tele[,5])
 bag_tree_train_acc
-table(bag_tree_pred, y_test_tele)
+table(bag_tree_pred, df_test_tele[,5])
 ```
 
 ```{r part_e_PCA}
