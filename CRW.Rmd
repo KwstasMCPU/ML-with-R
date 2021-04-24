@@ -145,9 +145,12 @@ df_tele <- read.table("churndata.txt")
 df_tele$churn <- as.factor(df_tele$churn) # converting churn to a factor variables
 attach(df_tele)
 ```
+The data set has information about 500 costumers of a telecom company. It consists 
+of 500 rows and 5 columns.
 
 ```{r show_df_head, echo=FALSE}
 head(df_tele)
+dim(df_tele)
 ```
 ### Summary Statistics
 
@@ -163,25 +166,11 @@ summary(df_tele)
 From the tables above we can notice that there is a difference in the means of the
 customers who switched to another telecommunication provider.
 
-Furthermore it is important to say. that we have an imbalanced data set. Meaning 
-that the customers who switched provider are way less than those who do not.
-This affects our algorithm.
+Furthermore it is important to say, that we have an unbalanced data set, since 
+that the customers who switched provider are way less (`r 103/500*100`% )than those who do not.
+An unbalanced data set can affect our model performance. Models train on unbalanced datasets usually suffer from poor accuracy when have to generalize, since the algorithm will be more biased towards the majority class. 
 
 ## Machine Learning Part (a)
-
-<!-- # ```{r, boxplots, echo=FALSE} -->
-<!-- # par(mfrow = c(1,2)) # divide the graphics window into 2 columns -->
-<!-- # boxplot(upload ~ churn, xlab = "Default", ylab = "Upload", -->
-<!-- # col = c("lightblue", "orange")) -->
-<!-- # boxplot(webget ~ churn, xlab = "Default", ylab = "Webget", -->
-<!-- # col = c("lightblue", "orange")) -->
-<!-- # par(mfrow = c(1,2)) -->
-<!-- # boxplot(enqcount ~ churn, xlab = "Default", ylab = "enqcount", -->
-<!-- # col = c("lightblue", "orange")) -->
-<!-- # boxplot(callwait ~ churn, xlab = "Default", ylab = "callwait", -->
-<!-- # col = c("lightblue", "orange")) -->
-<!-- #  -->
-<!-- # ``` -->
 
 ```{r initializing_the_plots, echo=FALSE}
 
@@ -212,6 +201,17 @@ enqcount_webget_scatter
 # https://stackoverflow.com/questions/1249548/side-by-side-plots-with-ggplot2
 detach(df_tele)
 ```
+While observing the histogramms we can conclude the following:
+
+1. The majority of the customers, have not switched to another provider. 
+2. The proportion of customers who have switched, tend to have higher upload speed.
+3. The mean time to load a webpage, for he majority of the customers who remained loyal the company, is between 200 - 400. If the value increases, the chance for a customer to switch provider increases.
+4. The customers who have called the company 7 times tend to switch provider.
+5. The distribution of waiting time for the both classes is similar.
+
+
+
+
 
 ## Machine Learning Part (b)
 
@@ -320,6 +320,17 @@ bag_tree_train <-randomForest(formula =  df_train_tele[,5] ~.,
 varImpPlot(bag_tree_train)
 importance(bag_tree_train) 
 ```
+
+Mean decrease Accuracy reflects how much accuracy is lost by excluding its variable,
+thus the more the accuracy decrease the more important this variable is. 
+
+Mean decrease Gini, shows the total decrease in node impurity resulted by the splits
+of a given variable, averaged over all trees. If a variable is useful. it tends to split a node into pure single class nodes. Thus, removing such variable, results a decrease in the average gain of the purity resulted by this variable. 
+
+We notice that webget and enqcount results the most mean decrease accuracy and gini.
+Also, upload scores higher in the mean decrease accuracy than callwait, while callwait scores better in gini, but with smaller spread.  
+
+In overall, we could argue that webget and enqcount are the most significant variables for classifying if a customer will switch provider. 
 
 ```{r random_forest_acc, echo=FALSE}
 bag_tree_pred <- predict(bag_tree_train, newdata = df_test_tele)
