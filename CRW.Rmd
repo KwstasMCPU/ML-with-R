@@ -81,7 +81,6 @@ plot_boxplot <- function(data = df_tele,
   theme(legend.position = "bottom")
 }
 
-
 plot_scatter <- function(data = df_tele, 
                          x,
                          y,
@@ -103,29 +102,6 @@ plot_scatter <- function(data = df_tele,
                             "no" = color_2))
 }
 
-
-
-# ggplot(wages_df, aes(x = union_status, y = wage, 
-#                      colour = union_status)) +
-#   geom_boxplot(varwidth = TRUE) +
-#   geom_jitter(width = 0.05) +
-#   labs(x = "Union Status",
-#        y = "Wage (Euros)") +
-#   stat_summary(fun = mean, 
-#                colour="darkblue", 
-#                geom = "point", 
-#                shape = 18, 
-#                size = 3,
-#                show.legend = FALSE) +
-#   stat_summary(fun = mean, 
-#                colour = "darkblue", 
-#                geom = "text", 
-#                show.legend = FALSE, 
-#                vjust = -0.7, 
-#                aes(label = round(..y.., digits = 2))) +
-#   theme(legend.position = "bottom")
-
-
 get_legend<-function(myggplot){
   tmp <- ggplot_gtable(ggplot_build(myggplot))
   leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
@@ -145,9 +121,12 @@ df_tele <- read.table("churndata.txt")
 df_tele$churn <- as.factor(df_tele$churn) # converting churn to a factor variables
 attach(df_tele)
 ```
+The data set has information about 500 costumers of a telecom company. It consists 
+of 500 rows and 5 columns.
 
 ```{r show_df_head, echo=FALSE}
 head(df_tele)
+dim(df_tele)
 ```
 ### Summary Statistics
 
@@ -163,25 +142,11 @@ summary(df_tele)
 From the tables above we can notice that there is a difference in the means of the
 customers who switched to another telecommunication provider.
 
-Furthermore it is important to say. that we have an imbalanced data set. Meaning 
-that the customers who switched provider are way less than those who do not.
-This affects our algorithm.
+Furthermore it is important to say, that we have an unbalanced data set, since 
+that the customers who switched provider are way less (`r 103/500*100`% )than those who do not.
+An unbalanced data set can affect our model performance. Models train on unbalanced datasets usually suffer from poor accuracy when have to generalize, since the algorithm will be more biased towards the majority class. 
 
 ## Machine Learning Part (a)
-
-<!-- # ```{r, boxplots, echo=FALSE} -->
-<!-- # par(mfrow = c(1,2)) # divide the graphics window into 2 columns -->
-<!-- # boxplot(upload ~ churn, xlab = "Default", ylab = "Upload", -->
-<!-- # col = c("lightblue", "orange")) -->
-<!-- # boxplot(webget ~ churn, xlab = "Default", ylab = "Webget", -->
-<!-- # col = c("lightblue", "orange")) -->
-<!-- # par(mfrow = c(1,2)) -->
-<!-- # boxplot(enqcount ~ churn, xlab = "Default", ylab = "enqcount", -->
-<!-- # col = c("lightblue", "orange")) -->
-<!-- # boxplot(callwait ~ churn, xlab = "Default", ylab = "callwait", -->
-<!-- # col = c("lightblue", "orange")) -->
-<!-- #  -->
-<!-- # ``` -->
 
 ```{r initializing_the_plots, echo=FALSE}
 
@@ -212,6 +177,39 @@ enqcount_webget_scatter
 # https://stackoverflow.com/questions/1249548/side-by-side-plots-with-ggplot2
 detach(df_tele)
 ```
+While observing the histogramms we can conclude the following:
+
+1. The majority of the customers, have not switched to another provider. 
+2. The proportion of customers who have switched, tend to have higher upload speed.
+3. The mean time to load a webpage, for he majority of the customers who remained 
+loyal the company, is between 200 - 400. If the value increases, the chance for 
+a customer to switch provider increases.
+4. The customers who have called the company 7 times tend to switch provider.
+5. The distribution of waiting time for the both classes is similar.
+
+From the boxplots we notice the below:
+
+1. The boxplot of uploading speed for those who have not switched, is relatively narrow,
+indicating that overall there is not a high degree of variation of their upload speeds. 
+In contrasts those who have switched provider, have a higher variance of upload speed. 
+Furthermore it is clear that those who have switched tend to have higher upload speeds, 
+while their max observed value is about 3 points greater from the max speed of the other group.
+
+2. We notice that the boxplot indicating the mean time to load a webpage is too 
+narrow (whiskers include), for the group who stayed in the company, indicating a very small variance. In more details the 75%
+of this group witness mean time about 180-400. Their appear to be a few outlines at the value 1000. 
+On the other hand we notice, that the loading time varies more for those who switched providers, since 50% of them experience
+loading time from about 380 to 700. We can clearly state that the group who switched provider have greater waiting times.
+
+3. Those who have not switched provider, have contracted less times the company in average (3.13), compare to those who do not (4.36).
+This can be explained, because customers facing connection issues tend to call more, and if their issues are not being solved they tend to switch providers. Also we notice that the max times someone have called the company is 7 times. Furthermore the boxplot fo the group who switched
+provider have no upper whisker, since the limit of the IQR is the same of the upper limit of the values. 
+This can be explained by the extreme skewness of the data (the majority are 7).
+
+5. There appears not to be any great difference of the waiting time between the two groups, while the median seems the same (8). The IQR of those who switched the company, is little wider, due to the longer upper whisker. The max value for those who switched is about 15, while for the other group 12.5. Both groups show some outlines for the value of 0, indicating that many customers did not waited (maybe because they never called)
+to be attended by a customer service operator.
+
+
 
 ## Machine Learning Part (b)
 
@@ -276,13 +274,13 @@ for(i in 1:100){
 ```
 
 ```{r plot_errors, echo=FALSE}
-plot(cross_knn_error[1:30], xlab = 'k', ylab = 'Error')
-
+plot(cross_knn_error[1:30], xlab = 'k', ylab = 'Error', col = 'blue')
 ```
 According to the graph, for k=1 or k=7 we have the same error,
 however it is important to check the confusion matrix.
 
 ```{r knn_with_best_k, echo=FALSE}
+library(caret)
 set.seed(1)
 normalized_knn <- knn(train = df_train_tele_norm[,-5], 
                       test = df_test_tele_norm[,-5], 
@@ -302,6 +300,7 @@ best_acc <- mean(best_knn == df_test_tele_norm$churn)
 best_acc
 table(normalized_knn, df_test_tele_norm$churn)
 table(best_knn, df_test_tele_norm$churn)
+confusionMatrix(normalized_knn, df_test_tele_norm$churn)
 ```
 We notice that for the both values of k, the algorithm struggles to predict
 correct the values of yes, while the majority of the values are assigned as no.
@@ -322,12 +321,28 @@ varImpPlot(bag_tree_train)
 importance(bag_tree_train) 
 ```
 
+Mean decrease Accuracy reflects how much accuracy is lost by excluding its variable,
+thus the more the accuracy decrease the more important this variable is. 
+
+Mean decrease Gini, shows the total decrease in node impurity resulted by the splits
+of a given variable, averaged over all trees. If a variable is useful. it tends to split a node into pure single class nodes. Thus, removing such variable, results a decrease in the average gain of the purity resulted by this variable. 
+
+We notice that webget and enqcount results the most mean decrease accuracy and gini.
+Also, upload scores higher in the mean decrease accuracy than callwait, while callwait scores better in gini, but with smaller spread.  
+
+In overall, we could argue that webget and enqcount are the most significant variables for classifying if a customer will switch provider. 
+
 ```{r random_forest_acc, echo=FALSE}
 bag_tree_pred <- predict(bag_tree_train, newdata = df_test_tele)
 bag_tree_train_acc <- mean(bag_tree_pred == df_test_tele[,5])
 bag_tree_train_acc
 table(bag_tree_pred, df_test_tele[,5])
 ```
+
+We notice that the random forest performs better compared to the KNN algorithm.
+The better accuracy stems from the fact that scored better on the True Positives.
+The KNN scored very poorly, on predicting those who switched provider predicting (only 3 out of the 34). 
+This stems from the unbalanced of our data set. 
 
 ## Machine Learning Part (e)
 ```{r part_e_PCA, echo=FALSE}
@@ -351,6 +366,8 @@ p<-new_variables %>%
        y = "Second Principal Component") +
   coord_fixed(ratio = 1)
 p
+
+plot(new_variables$Comp.1, new_variables$Comp.2)
 ```
 The information preserved in this plot equals to the proportion of the variances 
 of the two components so is 73.5%
@@ -369,7 +386,7 @@ comp_forest <-randomForest(formula = churn ~.,
 
 varImpPlot(comp_forest)
 importance(comp_forest) 
-````
+```
 
 ```{r model_acc, echo=FALSE}
 comp_forest_pred <- predict(comp_forest, newdata = comp_df_test[,-3])
@@ -396,4 +413,31 @@ ggplot()+
        y = "Second Principal Component",
        title = 'Actual') +
   coord_fixed(ratio = 1)
+```
+
+
+```{r}
+len <- 12 
+xp <- seq(-2.5, 6, length = len) 
+yp <- seq(-2.5, 4, length = len) 
+xygrid <- expand.grid(Comp.1 = xp, Comp.2 = yp)
+
+col3 <- rep("lightgreen", len*len) 
+
+for(i in 1:(len*len)){
+   if(comp_forest_pred[i]== 'Yes'){ 
+     col3[i] <- "blue" 
+   } else {
+     col3[i] <- "red"
+   }
+}
+
+
+plot(xygrid, col = col3, main = "Tree", xlab = "pressure", ylab = "wind") 
+
+# abline( h = c(62.5, 32.5))
+# lines( x = c(985.5, 985.5), y = c(32.5, 62.5))
+# 
+# points(pressure, wind, col = cols, pch = 16)
+
 ```
