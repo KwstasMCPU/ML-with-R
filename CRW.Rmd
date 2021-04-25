@@ -20,6 +20,7 @@ library(ggplot2)
 library(scales)
 library(grid)
 library(lemon)
+library(knitr)
 ```
 
 ```{r functions to be used, include=FALSE}
@@ -125,8 +126,9 @@ The data set has information about 500 costumers of a telecom company. It consis
 of 500 rows and 5 columns.
 
 ```{r show_df_head, echo=FALSE}
-head(df_tele)
+kable(head(df_tele))
 dim(df_tele)
+
 ```
 ### Summary Statistics
 
@@ -135,9 +137,11 @@ df_tele %>%
   group_by(churn) %>%
   summarise(mean_upload = mean(upload),
             mean_webget = mean(webget),
-            mean_callwait = mean(callwait))
+            mean_callwait = mean(callwait)) %>%
+  kable(caption = 'Mean values of the variables (group by churn)')
 
-summary(df_tele)
+kable(summary(df_tele),
+      caption = 'Summary Statistics')
 ```
 From the tables above we can notice that there is a difference in the means of the
 customers who switched to another telecommunication provider.
@@ -160,11 +164,11 @@ webget_box <- plot_boxplot(y=webget, y_lab='Mean time to load a webpage')
 enqcount_box <- plot_boxplot(y=enqcount, y_lab='Enquiry count')
 callwait_box <- plot_boxplot(y=callwait, y_lab='Waited time')
 
-upload_webget_scatter <- plot_scatter(x = upload, y = webget, x_lab = 'Upload speed', y_lab = 'mean load time')
-upload_callwait_scatter <- plot_scatter(x = upload, y = callwait,  x_lab = 'Upload speed', y_lab = 'Wait time')
-webget_callwait_scatter <- plot_scatter(x = webget, y = callwait, x_lab = 'Mean load time', y_lab = 'Wait time')
-enqcount_callwait_scatter <- plot_scatter(x = enqcount, y= callwait, x_lab = 'Enquiry count', y_lab='Wait time')
-enqcount_webget_scatter <- plot_scatter(x = enqcount, y= webget, x_lab = 'Enquiry count', y_lab='Mean time to load a webpage')
+# upload_webget_scatter <- plot_scatter(x = upload, y = webget, x_lab = 'Upload speed', y_lab = 'mean load time')
+# upload_callwait_scatter <- plot_scatter(x = upload, y = callwait,  x_lab = 'Upload speed', y_lab = 'Wait time')
+# webget_callwait_scatter <- plot_scatter(x = webget, y = callwait, x_lab = 'Mean load time', y_lab = 'Wait time')
+# enqcount_callwait_scatter <- plot_scatter(x = enqcount, y= callwait, x_lab = 'Enquiry count', y_lab='Wait time')
+# enqcount_webget_scatter <- plot_scatter(x = enqcount, y= webget, x_lab = 'Enquiry count', y_lab='Mean time to load a webpage')
 
 ```
 
@@ -172,8 +176,8 @@ enqcount_webget_scatter <- plot_scatter(x = enqcount, y= webget, x_lab = 'Enquir
 
 grid_arrange_shared_legend(upload_hist, webget_hist, enqcount_hist, callwait_hist, nrow = 2, ncol = 2)
 grid_arrange_shared_legend(upload_box, webget_box, enqcount_box, callwait_box, nrow = 2, ncol = 2)
-grid_arrange_shared_legend(upload_webget_scatter, upload_callwait_scatter, webget_callwait_scatter, enqcount_callwait_scatter,nrow = 2, ncol = 2)
-enqcount_webget_scatter
+# grid_arrange_shared_legend(upload_webget_scatter, upload_callwait_scatter, webget_callwait_scatter, enqcount_callwait_scatter,nrow = 2, ncol = 2)
+# enqcount_webget_scatter
 # https://stackoverflow.com/questions/1249548/side-by-side-plots-with-ggplot2
 detach(df_tele)
 ```
@@ -219,9 +223,6 @@ df_subset <- sample(500, 350)
 
 df_train_tele <- df_tele[df_subset,]
 df_test_tele <- df_tele[-df_subset,]
-
-head(df_train_tele)
-head(df_test_tele)
 ```
 
 ## Machine Learning Part (c)
@@ -280,36 +281,47 @@ According to the graph, for k=1 or k=7 we have the same error,
 however it is important to check the confusion matrix.
 
 ```{r knn_with_best_k, echo=FALSE}
-library(caret)
 set.seed(1)
-normalized_knn <- knn(train = df_train_tele_norm[,-5], 
+knn_1 <- knn(train = df_train_tele_norm[,-5], 
                       test = df_test_tele_norm[,-5], 
                       cl=df_train_tele_norm$churn, 
                       k=1)
 
 
-norm_knn_accuracy <- mean(normalized_knn == df_test_tele_norm$churn)
-norm_knn_accuracy
+knn_1_accuracy <- mean(knn_1 == df_test_tele_norm$churn)
+knn_1_error <- mean(knn_1 != df_test_tele_norm$churn)
 
-best_knn <- knn(train = df_train_tele_norm[,-5], 
+knn_7 <- knn(train = df_train_tele_norm[,-5], 
                 test = df_test_tele_norm[,-5], 
                 cl=df_train_tele_norm$churn, 
                 k=7)
 
-best_acc <- mean(best_knn == df_test_tele_norm$churn)
-best_acc
-table(normalized_knn, df_test_tele_norm$churn)
-table(best_knn, df_test_tele_norm$churn)
-confusionMatrix(normalized_knn, df_test_tele_norm$churn)
-```
-We notice that for the both values of k, the algorithm struggles to predict
-correct the values of yes, while the majority of the values are assigned as no.
-That is an issue resulted from the imbalance of our set.
+knn_7_accuracy <- mean(knn_7 == df_test_tele_norm$churn)
+knn_7_error <- mean(knn_7 != df_test_tele_norm$churn)
 
-We prefer the value for k=1, since predicts better those who switched provider.
+knn_1_conf_matrix <- table(knn_1, df_test_tele_norm$churn)
+knn_7_conf_matrix <- table(knn_7, df_test_tele_norm$churn)
+
+rownames(knn_1_conf_matrix) <- c("No","Yes")
+kable(knn_1_conf_matrix,
+       col.names = c('No','Yes'),
+      caption = 'Confusion Matrix for k=1')
+
+rownames(knn_7_conf_matrix) <- c("No","Yes")
+kable(knn_7_conf_matrix,
+       col.names = c('No','Yes'),
+      caption = ' Confusion Matrix for k=7')
+```
+We notice that for the both values of k, the algorithm struggles to predict the
+correct the those who switched provider (true positives), while the majority of 
+the values are assigned as no, resulting 31 false negatives for k = 1, and 32 for
+k = 7.<br>That is an issue resulted from the imbalance of our set.
+
+For both values of k, the test error is `r knn_1_error`, however we prefer the value 
+for k=1, since predicts better true positives (those who switched providers).
 
 ## Machine Learning part (d)
-```{r machine_learning_part_d, echo=FALSE}
+```{r machine_learning_part_d, echo=FALSE, warning=FALSE, message=FALSE}
 library(randomForest)
 set.seed(1)
 bag_tree_train <-randomForest(formula =  df_train_tele[,5] ~., 
@@ -318,7 +330,8 @@ bag_tree_train <-randomForest(formula =  df_train_tele[,5] ~.,
                               importance=TRUE,
                               ntree=500)
 varImpPlot(bag_tree_train)
-importance(bag_tree_train) 
+kable(importance(bag_tree_train),
+      caption = "Variables' importance") 
 ```
 
 Mean decrease Accuracy reflects how much accuracy is lost by excluding its variable,
@@ -335,14 +348,17 @@ In overall, we could argue that webget and enqcount are the most significant var
 ```{r random_forest_acc, echo=FALSE}
 bag_tree_pred <- predict(bag_tree_train, newdata = df_test_tele)
 bag_tree_train_acc <- mean(bag_tree_pred == df_test_tele[,5])
-bag_tree_train_acc
-table(bag_tree_pred, df_test_tele[,5])
+bag_tree_train_error <- mean(bag_tree_pred != df_test_tele[,5])
+kable(table(bag_tree_pred, df_test_tele[,5]),
+      caption = 'ConfMatrix for randomForest')
 ```
 
 We notice that the random forest performs better compared to the KNN algorithm.
-The better accuracy stems from the fact that scored better on the True Positives.
-The KNN scored very poorly, on predicting those who switched provider predicting (only 3 out of the 34). 
-This stems from the unbalanced of our data set. 
+The test error is only `r bag_tree_train_error`, and thus is accuracy `r bag_tree_train_acc`.
+The better accuracy comes from the fact that scored better on the True Positives.
+The KNN scored very poorly, on predicting those who switched provider, predicting correctly
+, resulting a recall of only `r 3/(3+31)`. 
+This stems from the fact that our data set is unbalanced.
 
 ## Machine Learning Part (e)
 ```{r part_e_PCA, echo=FALSE}
