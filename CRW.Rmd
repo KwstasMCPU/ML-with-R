@@ -11,6 +11,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
 ```{r load libraries, include=FALSE, message = FALSE}
 library(tidytext)
 library(tidyr)
@@ -27,7 +28,8 @@ library(knitr)
 plot_gghistogram <- function(data = df_tele, 
                              x, 
                              x_lab = '',
-                             hue = churn, 
+                             hue = churn,
+                             title_ = '',
                              fill_color_1 = 'black', 
                              fill_color_2 = 'black',
                              color_color_1 = 'tomato',
@@ -35,7 +37,8 @@ plot_gghistogram <- function(data = df_tele,
   data %>%
     ggplot()+
     geom_histogram(aes(x = x, fill = hue), alpha=0.5)+
-    labs(x = x_lab,
+    labs(title = title_,
+        x = x_lab,
         y = "Count",
         fill = "Did user left?")+
     theme(axis.text = element_text(size = 13, color = "black"),
@@ -51,6 +54,7 @@ plot_boxplot <- function(data = df_tele,
                          hue = churn,
                          x_lab = '',
                          y_lab = '',
+                         title_ = '',
                          fill_color_1 = 'black', 
                          fill_color_2 = 'black',
                          color_color_1 = 'tomato',
@@ -58,7 +62,8 @@ plot_boxplot <- function(data = df_tele,
   data %>%
     ggplot(aes(hue, y, fill=hue))+
     geom_boxplot(varwidth = TRUE)+
-    labs(x=x_lab,
+    labs(title = title_,
+      x=x_lab,
          y=y_lab,
     fill = "Did user left?")+
     theme(axis.text = element_text(size = 13, color = "black"),
@@ -87,6 +92,7 @@ plot_scatter <- function(data = df_tele,
                          y,
                          x_lab = '',
                          y_lab = '',
+                         title_ = '',
                          hue = churn, 
                          color_1 = 'tomato', 
                          color_2 = 'steelblue'){
@@ -94,7 +100,8 @@ plot_scatter <- function(data = df_tele,
   data %>%
     ggplot()+
     geom_point(aes(x = x, y = y, color = hue))+
-    labs(x = x_lab,
+    labs(title = title_,
+      x = x_lab,
          y = y_lab,
          color = "Did user left?")+
     theme(axis.text = element_text(size = 13, color = "black"),
@@ -120,15 +127,14 @@ get_legend<-function(myggplot){
 setwd("C:/Users/kwsta/master_projects/math501")
 df_tele <- read.table("churndata.txt")
 df_tele$churn <- as.factor(df_tele$churn) # converting churn to a factor variables
+d <- dim(df_tele)
 attach(df_tele)
 ```
 The data set has information about 500 costumers of a telecom company. It consists 
-of 500 rows and 5 columns.
+of `r d[1]` rows and `r d[2]` columns.
 
 ```{r show_df_head, echo=FALSE}
 kable(head(df_tele))
-dim(df_tele)
-
 ```
 ### Summary Statistics
 
@@ -147,17 +153,19 @@ From the tables above we can notice that there is a difference in the means of t
 customers who switched to another telecommunication provider.
 
 Furthermore it is important to say, that we have an unbalanced data set, since 
-that the customers who switched provider are way less (`r 103/500*100`% )than those who do not.
-An unbalanced data set can affect our model performance. Models train on unbalanced datasets usually suffer from poor accuracy when have to generalize, since the algorithm will be more biased towards the majority class. 
+that the customers who switched provider represent only the `r 103/500*100`% of our sample.
+An unbalanced data set can affect our model performance. Models trained on unbalanced 
+datasets usually suffer from poor accuracy when have to generalize, since the 
+algorithm has fewer examples of the minority class, thus will be more biased towards the majority class. 
 
 ## Machine Learning Part (a)
 
 ```{r initializing_the_plots, echo=FALSE}
 
-upload_hist <- plot_gghistogram(x=upload, x_lab='Upload speed')
-webget_hist <- plot_gghistogram(x=webget, x_lab='Mean time to load a webpage')
-enqcount_hist <- plot_gghistogram(x=enqcount, x_lab='Enquiry count')
-callwait_hist <- plot_gghistogram(x=callwait, x_lab='Waited time')
+upload_hist <- plot_gghistogram(x=upload, x_lab='Upload speed', title_ = 'Upload speed distribution')
+webget_hist <- plot_gghistogram(x=webget, x_lab='Mean time to load a webpage', title_ ='Webpage mean loading time distribution')
+enqcount_hist <- plot_gghistogram(x=enqcount, x_lab='Enquiry count', title_ = 'Enqcount distribution')
+callwait_hist <- plot_gghistogram(x=callwait, x_lab='Waited time', title_ ='Waiting time to be attended by customer service distribution')
 
 upload_box <- plot_boxplot(y=upload, y_lab = 'Upload speed')
 webget_box <- plot_boxplot(y=webget, y_lab='Mean time to load a webpage')
@@ -171,16 +179,15 @@ callwait_box <- plot_boxplot(y=callwait, y_lab='Waited time')
 # enqcount_webget_scatter <- plot_scatter(x = enqcount, y= webget, x_lab = 'Enquiry count', y_lab='Mean time to load a webpage')
 
 ```
+### Data Visualization
 
-```{r ploting, echo=FALSE, message=FALSE }
-
+```{r ploting_hists, echo=FALSE, message=FALSE }
 grid_arrange_shared_legend(upload_hist, webget_hist, enqcount_hist, callwait_hist, nrow = 2, ncol = 2)
-grid_arrange_shared_legend(upload_box, webget_box, enqcount_box, callwait_box, nrow = 2, ncol = 2)
 # grid_arrange_shared_legend(upload_webget_scatter, upload_callwait_scatter, webget_callwait_scatter, enqcount_callwait_scatter,nrow = 2, ncol = 2)
 # enqcount_webget_scatter
-# https://stackoverflow.com/questions/1249548/side-by-side-plots-with-ggplot2
-detach(df_tele)
 ```
+
+
 While observing the histogramms we can conclude the following:
 
 1. The majority of the customers, have not switched to another provider. 
@@ -190,6 +197,12 @@ loyal the company, is between 200 - 400. If the value increases, the chance for
 a customer to switch provider increases.
 4. The customers who have called the company 7 times tend to switch provider.
 5. The distribution of waiting time for the both classes is similar.
+
+```{r plotting_box, echo=FALSE, message=FALSE}
+grid_arrange_shared_legend(upload_box, webget_box, enqcount_box, callwait_box, nrow = 2, ncol = 2)
+detach(df_tele)
+```
+
 
 From the boxplots we notice the below:
 
@@ -275,7 +288,14 @@ for(i in 1:100){
 ```
 
 ```{r plot_errors, echo=FALSE}
-plot(cross_knn_error[1:30], xlab = 'k', ylab = 'Error', col = 'blue')
+plot(cross_knn_error[1:30], 
+     xlab = 'k', 
+     ylab = '(Test) Classification Error', 
+     col = 'blue',
+     main = '(Test) Error Rate vs Neighbors (k)',
+     type = 'b')
+# at a line to show the min value
+abline(h = min(cross_knn_error), col = "darkorange", lty = 3)
 ```
 According to the graph, for k=1 or k=7 we have the same error,
 however it is important to check the confusion matrix.
@@ -317,8 +337,11 @@ correct the those who switched provider (true positives), while the majority of
 the values are assigned as no, resulting 31 false negatives for k = 1, and 32 for
 k = 7.<br>That is an issue resulted from the imbalance of our set.
 
-For both values of k, the test error is `r knn_1_error`, however we prefer the value 
-for k=1, since predicts better true positives (those who switched providers).
+For both values of k, the test error is `r knn_1_error`. However, despite the fact 
+that for $k=1$ the model predicts better the true positives (those who switched providers),
+fewer neighbors corresponds to high model complexity (Müller & Guido, 2017), 
+meaning that our model might not generalize. Thus we would prefer the value for
+$k=7$.
 
 ## Machine Learning part (d)
 ```{r machine_learning_part_d, echo=FALSE, warning=FALSE, message=FALSE}
@@ -355,10 +378,9 @@ kable(table(bag_tree_pred, df_test_tele[,5]),
 
 We notice that the random forest performs better compared to the KNN algorithm.
 The test error is only `r bag_tree_train_error`, and thus is accuracy `r bag_tree_train_acc`.
-The better accuracy comes from the fact that scored better on the True Positives.
+We notice performed much better on the True Positives.
 The KNN scored very poorly, on predicting those who switched provider, predicting correctly
-, resulting a recall of only `r 3/(3+31)`. 
-This stems from the fact that our data set is unbalanced.
+only 3 out of the 34, resulting a recall of only `r 3/(3+31)`.
 
 ## Machine Learning Part (e)
 ```{r part_e_PCA, echo=FALSE}
@@ -382,8 +404,6 @@ p<-new_variables %>%
        y = "Second Principal Component") +
   coord_fixed(ratio = 1)
 p
-
-plot(new_variables$Comp.1, new_variables$Comp.2)
 ```
 The information preserved in this plot equals to the proportion of the variances 
 of the two components so is 73.5%
@@ -429,31 +449,4 @@ ggplot()+
        y = "Second Principal Component",
        title = 'Actual') +
   coord_fixed(ratio = 1)
-```
-
-
-```{r}
-len <- 12 
-xp <- seq(-2.5, 6, length = len) 
-yp <- seq(-2.5, 4, length = len) 
-xygrid <- expand.grid(Comp.1 = xp, Comp.2 = yp)
-
-col3 <- rep("lightgreen", len*len) 
-
-for(i in 1:(len*len)){
-   if(comp_forest_pred[i]== 'Yes'){ 
-     col3[i] <- "blue" 
-   } else {
-     col3[i] <- "red"
-   }
-}
-
-
-plot(xygrid, col = col3, main = "Tree", xlab = "pressure", ylab = "wind") 
-
-# abline( h = c(62.5, 32.5))
-# lines( x = c(985.5, 985.5), y = c(32.5, 62.5))
-# 
-# points(pressure, wind, col = cols, pch = 16)
-
 ```
