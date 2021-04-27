@@ -41,12 +41,13 @@ plot_gghistogram <- function(data = df_tele,
         x = x_lab,
         y = "Count",
         fill = "Did user left?")+
-    theme(axis.text = element_text(size = 13, color = "black"),
-        axis.title = element_text(size = 13, color = "black")) +
+    theme(axis.text = element_text(size = 11, color = "black"),
+        axis.title = element_text(size = 11, color = "black")) +
     scale_color_manual(values = c("yes" = fill_color_1, 
                                 "no" = fill_color_2)) +
     scale_fill_manual(values = c("yes" = color_color_1, 
-                                "no" = color_color_2))
+                                "no" = color_color_2))+
+    theme(plot.title = element_text(size=12))
 }
 
 plot_boxplot <- function(data = df_tele, 
@@ -66,12 +67,13 @@ plot_boxplot <- function(data = df_tele,
       x=x_lab,
          y=y_lab,
     fill = "Did user left?")+
-    theme(axis.text = element_text(size = 13, color = "black"),
-        axis.title = element_text(size = 13, color = "black")) +
+    theme(axis.text = element_text(size = 11, color = "black"),
+        axis.title = element_text(size = 11, color = "black")) +
     scale_color_manual(values = c("yes" = fill_color_1, 
                                 "no" = fill_color_2)) +
     scale_fill_manual(values = c("yes" = color_color_1, 
                                 "no" = color_color_2))+
+    theme(plot.title = element_text(size=12))+
   stat_summary(fun = mean,
                colour="darkblue",
                geom = "point",
@@ -104,20 +106,11 @@ plot_scatter <- function(data = df_tele,
       x = x_lab,
          y = y_lab,
          color = "Did user left?")+
-    theme(axis.text = element_text(size = 13, color = "black"),
-          axis.title = element_text(size = 13, color = "black"))+
+    theme(axis.text = element_text(size = 11, color = "black"),
+          axis.title = element_text(size = 11, color = "black"))+
     scale_color_manual(values = c("yes" = color_1, 
                             "no" = color_2))
 }
-
-# get_legend<-function(myggplot){
-#     
-# # https://stackoverflow.com/questions/12539348/ggplot-separate-legend-and-plot
-#   tmp <- ggplot_gtable(ggplot_build(myggplot))
-#   leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
-#   legend <- tmp$grobs[[leg]]
-#   return(legend)
-# }
 
 rounding_two_decimals_percentage<- function(x){
   round(x*100, 2)
@@ -138,14 +131,12 @@ d <- dim(df_tele)
 attach(df_tele)
 ```
 The data set has information about 500 costumers of a telecom company. It consists 
-of `r d[1]` rows and `r d[2]` columns.<br>
-
+of `r d[1]` rows and `r d[2]` columns.
 ```{r show_df_head, echo=FALSE}
-kable(head(df_tele))
+kable(head(df_tele),
+      caption = 'Head of the data set')
 ```
-
 The tables below gives us statistical information regarding the variables of our dataset.
-
 ```{r summary_stats, echo=FALSE, warning=FALSE, message=FALSE}
 df_tele %>%
   group_by(churn) %>%
@@ -161,22 +152,22 @@ From **table 2** above we can notice that there is a difference in the means of 
 customers who switched to another telecommunication provider.
 
 Furthermore it is important to say, that we have an unbalanced data set, since 
-the customers who switched to a different provider represent only the `r rounding_two_decimals_percentage(103/500)`% of our sample.
-An unbalanced data set can affect our model performance. Models trained on unbalanced 
+the customers who switched to a different provider account for only the `r rounding_two_decimals_percentage(103/500)`% of our sample.
+An unbalanced data set can affect our model's performance. Models trained on unbalanced 
 datasets usually suffer from poor accuracy when have to generalize, since the 
 algorithm has fewer examples of the minority class, thus will be more biased towards the majority class. 
 
 ```{r initializing_the_plots, echo=FALSE}
 
 upload_hist <- plot_gghistogram(x=upload, x_lab='Upload speed', title_ = 'Upload speed distribution')
-webget_hist <- plot_gghistogram(x=webget, x_lab='Mean time to load a webpage', title_ ='Webpage mean loading time distribution')
-enqcount_hist <- plot_gghistogram(x=enqcount, x_lab='Enquiry count', title_ = 'Enqcount distribution')
-callwait_hist <- plot_gghistogram(x=callwait, x_lab='Waited time', title_ ='Waiting time to be attended by customer service distribution')
+webget_hist <- plot_gghistogram(x=webget, x_lab='Mean time to load a webpage', title_ ='Webpage mean loading time\ndistribution')
+enqcount_hist <- plot_gghistogram(x=enqcount, x_lab='Times called', title_ = 'Enquiry count distribution')
+callwait_hist <- plot_gghistogram(x=callwait, x_lab='Waiting time', title_ ='Waiting time to be attended\nby customer service distribution')
 
 upload_box <- plot_boxplot(y=upload, y_lab = 'Upload speed')
-webget_box <- plot_boxplot(y=webget, y_lab='Mean time to load a webpage')
-enqcount_box <- plot_boxplot(y=enqcount, y_lab='Enquiry count')
-callwait_box <- plot_boxplot(y=callwait, y_lab='Waited time')
+webget_box <- plot_boxplot(y=webget, y_lab='Mean time to load')
+enqcount_box <- plot_boxplot(y=enqcount, y_lab='Times called')
+callwait_box <- plot_boxplot(y=callwait, y_lab='Waiting time')
 
 # upload_webget_scatter <- plot_scatter(x = upload, y = webget, x_lab = 'Upload speed', y_lab = 'mean load time')
 # upload_callwait_scatter <- plot_scatter(x = upload, y = callwait,  x_lab = 'Upload speed', y_lab = 'Wait time')
@@ -186,6 +177,8 @@ callwait_box <- plot_boxplot(y=callwait, y_lab='Waited time')
 
 ```
 ### Data Visualization
+
+**Histograms**
 
 ```{r ploting_hists, echo=FALSE, message=FALSE }
 grid_arrange_shared_legend(upload_hist, webget_hist, enqcount_hist, callwait_hist, nrow = 2, ncol = 2)
@@ -202,8 +195,10 @@ While observing the histogramms we can conclude the following:
 loyal the company, is between 200 - 400. If the value increases, the chance for 
 a customer to switch provider increases.
 4. The customers who have called the company 7 times tend to switch provider.
-5. The distribution of waiting time for the both classes is similar.
+5. The distribution of waiting time for the both classes is similar, however for
+values above 12.5 there are more customers who switched provider.
 
+**Boxplots**
 ```{r plotting_box, echo=FALSE, message=FALSE}
 grid_arrange_shared_legend(upload_box, webget_box, enqcount_box, callwait_box, nrow = 2, ncol = 2)
 detach(df_tele)
@@ -213,23 +208,23 @@ detach(df_tele)
 From the boxplots we notice the below:
 
 1. The boxplot of uploading speed for those who have not switched, is relatively narrow,
-indicating that overall there is not a high degree of variation of their upload speeds. 
-In contrasts those who have switched provider, have a higher variance of upload speed. 
+indicating that overall there is a small degree of variation of their upload speeds. 
+Those who have switched provider, have a higher variance of upload speed. 
 Furthermore it is clear that those who have switched tend to have higher upload speeds, 
-while their max observed value is about 3 points greater from the max speed of the other group.
+while their mean value is about 2.5 points higher, and the max observed value is about 3 points greater from the max speed of the other group.
 
 2. We notice that the boxplot indicating the mean time to load a webpage is too 
 narrow (whiskers include), for the group who stayed in the company, indicating a very small variance. In more details the 75%
-of this group witness mean time about 180-400. Their appear to be a few outlines at the value 1000. 
+of this group witness mean waiting time about 180-400. Their appear to be a few outlines at the value 1000. 
 On the other hand we notice, that the loading time varies more for those who switched providers, since 50% of them experience
 loading time from about 380 to 700. We can clearly state that the group who switched provider have greater waiting times.
 
-3. Those who have not switched provider, have contracted less times the company in average (3.13), compare to those who do not (4.36).
-This can be explained, because customers facing connection issues tend to call more, and if their issues are not being solved they tend to switch providers. Also we notice that the max times someone have called the company is 7 times. Furthermore the boxplot fo the group who switched
+3. Those who have not switched provider, have contracted less times the company in average (3.13), compare to those who have (4.36).
+This can be explained, because customers facing connection issues tend to call more, and if their issues are not being solved they tend to switch providers. Also we notice that the max times someone have called the company is 7 times. Furthermore the boxplot for the group who switched
 provider have no upper whisker, since the limit of the IQR is the same of the upper limit of the values. 
-This can be explained by the extreme skewness of the data (the majority are 7).
+This can be explained by the extreme skewness of the data (the majority of the values are 7).
 
-5. There appears not to be any great difference of the waiting time between the two groups, while the median seems the same (8). The IQR of those who switched the company, is little wider, due to the longer upper whisker. The max value for those who switched is about 15, while for the other group 12.5. Both groups show some outlines for the value of 0, indicating that many customers did not waited (maybe because they never called)
+5. There appears not to be any great difference of the waiting time between the two groups, while the median seems the same (8). The IQR of those who switched provider, is little longer, and the whiskers as well, indicating higher variation. The max value for those who switched is about 15, while for the other group 12.5. Both groups show some outlines for the value of 0, indicating that many customers did not waited (maybe because they never called)
 to be attended by a customer service operator.
 
 ## Machine Learning Part (b)
@@ -241,7 +236,7 @@ df_subset <- sample(500, 350)
 df_train_tele <- df_tele[df_subset,]
 df_test_tele <- df_tele[-df_subset,]
 ```
-In order to produce a classification model, we firstly split our data set into a 
+In order to produce a classification model, we firstly randomly split our data set into a 
 training set, containing 350 randomly chosen data points, and a test set containing 
 the remaining 150 data points.
 
@@ -298,13 +293,14 @@ kable(knn_1_conf_matrix,
 ```
 The test error for the KNN algorithm for $k=1$ is `r rounding_two_decimals_percentage(knn_1_error)`%.
 We notice that the algorithm struggles to predict correctly those who switched provider (true positives), while the majority of 
-the values are assigned as no, resulting 31 false negatives for k = 1, thus a recall of
-of only `r rounding_two_decimals_percentage(3/(3+31))`%.<br>That is an issue resulted from the imbalance of our set.
+the values are assigned as no, resulting 31 false negatives, thus a recall of
+of only `r rounding_two_decimals_percentage(knn_1_conf_matrix[2,2]/(knn_1_conf_matrix[2,2]+knn_1_conf_matrix[1,2]))`%. This issue can be explained by the imbalance of our set.
 
+### Leave-One-Out Cross-Validation
 In order to find the optimal value of $k$, we are going to use the leave-one-out 
 cross-validation for the training data set.
 
-According to the graph below, for k=1 or k=7 we have the same error,
+According to the graph below, for $k=1$ or $k=7$ we have the same error,
 however it is important to check the confusion matrices.
 ```{r cross_validation, include=FALSE}
 set.seed(1)
@@ -329,7 +325,7 @@ plot(cross_knn_error[1:30],
      main = '(Test) Error Rate vs Neighbors (k)',
      type = 'b')
 # at a line to show the min value
-abline(h = min(cross_knn_error), col = "darkorange", lty = 3)
+abline(h = min(cross_knn_error), col = "darkorange", lty = 5)
 ```
 
 
@@ -364,12 +360,11 @@ rownames(cross_knn_1_conf_matrix) <- c("No","Yes")
 kable(cross_knn_1_conf_matrix,
        col.names = c('No','Yes'),
       caption = 'Confusion Matrix for k=1')
-cross_knn_7_error
 ```
 
 By calculating using the LOOCV, for both values of $k$, the test error is `r rounding_two_decimals_percentage(cross_knn_7_error)`%.
 We notice that it performs really better compared to the simple KNN case. However, despite the fact 
-that for $k=1$ the model predicts better the true positives (those who switched providers) resulting a recall `r rounding_two_decimals_percentage(42/(42+27))`,
+that for $k=1$ the model predicts better the true positives (those who switched providers) resulting a recall `r rounding_two_decimals_percentage(cross_knn_1_conf_matrix[2,2]/(cross_knn_1_conf_matrix[2,2]+cross_knn_1_conf_matrix[1,2]))`% compared to the `r rounding_two_decimals_percentage(cross_knn_7_conf_matrix[2,2]/(cross_knn_7_conf_matrix[2,2]+cross_knn_7_conf_matrix[1,2]))`%,
 fewer $k$-neighbors correspond to higher model complexity (Müller & Guido, 2017), 
 meaning that our model might not generalize. Thus we would prefer the value for
 $k=7$.
@@ -396,16 +391,15 @@ kable(importance(bag_tree_train),
       caption = "Variables' importance") 
 ```
 
-*Mean decrease Accuracy* reflects how much accuracy is lost by excluding its variable,
+ * **Mean decrease Accuracy** reflects how much accuracy is lost by excluding the respective variable,
 thus the more the accuracy decrease the more important this variable is. 
 
-*Mean decrease Gini* shows the total decrease in node impurity gained resulted by the splits
-of a given variable, averaged over all trees. If a variable is useful. it tends to split a node into pure single class nodes. Thus, removing such variable, results a decrease in the average purity gained resulted by this variable. 
+ * **Mean decrease Gini** shows the total decrease in node impurity resulted by the splits
+of a given variable, averaged over all trees. If a variable is useful. it tends to split a node into pure single class nodes. Thus, removing such variable, results a decrease in the average purity gained due to this variable. 
 
 We notice that webget and enqcount results the most mean decrease accuracy and gini.
 Also, upload scores higher in the mean decrease accuracy than callwait, while callwait scores better in gini, but with smaller spread.  
-
-In overall, we could argue that webget and enqcount are the most significant variables for classifying if a customer will switch provider.
+In overall, we could argue that webget and enqcount are the most significant variables for classifying with random forest if a customer will switch provider.
 
 ### Making predictions
 
@@ -413,25 +407,27 @@ In overall, we could argue that webget and enqcount are the most significant var
 bag_tree_pred <- predict(bag_tree_train, newdata = df_test_tele[,-5])
 bag_tree_train_acc <- mean(bag_tree_pred == df_test_tele[,5])
 bag_tree_train_error <- mean(bag_tree_pred != df_test_tele[,5])
-kable(table(bag_tree_pred, df_test_tele[,5]),
+rf_matrix <-table(bag_tree_pred, df_test_tele[,5])
+kable(rf_matrix,
       caption = 'ConfMatrix for randomForest')
 ```
 
 We notice that the random forest performs better compared to the KNN models. The test error for the vanilla KNN with $k=1$ is `r rounding_two_decimals_percentage(knn_1_error)`%, for the LOOCV KNN for $k=7$ is `r rounding_two_decimals_percentage(cross_knn_7_error)`
-while for rf test error is only `r rounding_two_decimals_percentage(bag_tree_train_error)`%, and thus its accuracy is `r rounding_two_decimals_percentage(bag_tree_train_acc)`%.
-We notice that the rf performed much better predicting those who switched providers (True Positives), having a recall of `r rounding_two_decimals_percentage(29/(29+5))`%, compared to LOOCV KNN with recall = `r rounding_two_decimals_percentage(33/(33+36))`.
-In general both KNN models, scored very poorly, on predicting those who switched providers. That derives from the unbalance of our dataset.
+while for random forest the test error is only `r rounding_two_decimals_percentage(bag_tree_train_error)`%, and thus its accuracy is `r rounding_two_decimals_percentage(bag_tree_train_acc)`%.
+We notice that the random forest performed much better predicting those who switched providers (True Positives), having a recall of `r rounding_two_decimals_percentage(rf_matrix[2,2]/(rf_matrix[2,2]+rf_matrix[1,2]))`%, compared to LOOCV KNN with recall =  47.83%.
+In general both KNN models, scored very poorly, on predicting those who switched providers. That might derives from the unbalance of our dataset.
 
 ## Machine Learning Part (e)
 
+### Principal Component Analysis (PCA)
 We are going to perform Principal Component Analysis (PCA) for the four variables.
 PCA is a method usually used to reduce the dimensionality of a large data set of variables (Gareth et al., 2017).
 
 ```{r part_e_PCA, echo=FALSE}
 tele_pca <- princomp(df_tele[,-5], cor = TRUE)
-summary(tele_pca)
 plot(tele_pca,
      main = 'The amount of information explained by each principal component')
+summary(tele_pca)
 ```
 According to the summary table, Comp.1 accounts for the 41% of the information or variance in the data,
 Comp.2 for the 31%, Comp.3 for the 18% and Comp.4 for the 8%.
@@ -452,16 +448,16 @@ p
 The information preserved in this plot equals to the proportion of the variances 
 of the two components (Comp.1 and Comp.2) so is 73.5%
 
-## First two principal components interpretetion
+### First two principal components interpretetion
 
 ```{r, echo=FALSE}
 biplot(tele_pca, xlim=c(-0.1,0.15), ylim=c(-0.13,0.15))
 ```
-We notice that the **biplot** function does not produce as clean plot, to this end
+We notice that the **biplot** function does not produce a clean plot, to this end
 for interpreting the first two principal components we implemented the **fviz_pca_biplot**,
 and **fviz_pca_var** functions from the **factorextra** package, since they produce a cleaner graph.
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 library(factoextra)
 fviz_pca_var(tele_pca)
 fviz_pca_biplot(tele_pca, geom = 'point')
@@ -469,12 +465,12 @@ fviz_pca_biplot(tele_pca, geom = 'point')
 From the graph above notice that following:
 
 1. The more parallel to a principal component axis is a vector, the more it contributes to that principal component. 
-Thus, the variables **upload** and **webget** have very high (positive) contribution on the first principal component (the highest contribution is due to **webget**), while the variables **enqcount** and **callwait** appear not to contribute at all.
+Thus, the variables **upload** and **webget** have very high (positive) contribution on the first principal component (the highest contribution is due to **webget**), while the variables **enqcount** and **callwait** almost do not contribute at all.
 
 2. On the other hand, the variables **enqcount** and **callwait** have very high (negative) contribution on the second principal component,  
-while the variables **upload** and **webget** appear not to contribute at all.
+while the variables **upload** and **webget** almost do not contribute at all (**webget** appear to be inline with the x-axis so it will no contribute at all).
 
-3. The longer the vector, the more variability of this variable is represented by the two displayed principal components. The variables  **upload** and **webget** are longer than the **enqcount** and **callwait**, indicating that **upload** and **webget** that more variability of those variables is presented by these two principal components, compared to the other two variables.
+3. The longer the vector, the more variability of this variable is represented by the two displayed principal components. The variables  **upload** and **webget** are longer than the **enqcount** and **callwait**, indicating that more variability of the former variables is presented by these two principal components, compared to the other two variables.
 
 4. When two vectors form a small angle between them, it represents that the two variables are positively correlated. Thus, the pair **upload** - **webget**, 
 and the pair **enqcount** - **callwait** are positively correlated. However the variables those two pairs have no correlation between them, since their respective vectors, form about a 90 degrees angle. 
@@ -491,21 +487,23 @@ comp_forest <-randomForest(formula = churn ~.,
                            importance=TRUE)
 ```
 
+We are applying the random forest classifier (bagging) method to predict the value 
+of **churn** variable based on the first two principal components.
 ```{r model_acc, echo=FALSE}
 comp_forest_pred <- predict(comp_forest, newdata = comp_df_test[,-3])
 comp_forest_acc <- mean(comp_forest_pred == comp_df_test[,3])
 comp_forest_error <- mean(comp_forest_pred != comp_df_test[,3])
-kable(table(comp_forest_pred, comp_df_test[,3]),
+rf_matrix_comp <- table(comp_forest_pred, comp_df_test[,3])
+kable(rf_matrix_comp,
       caption = 'Confusion matrix rf with components')
 ```
 
 The test error of random forest is `r rounding_two_decimals_percentage(comp_forest_error)`%, 
-which is worse than the test error obtained from the random forest which used the 
-bagging method (test error `r rounding_two_decimals_percentage(bag_tree_train_error)`%).
+which is worse than the test error obtained from the random forest which used all the variables (test error `r rounding_two_decimals_percentage(bag_tree_train_error)`%).
 
 In general we notice that, in this case the algorithm performs poorer in predicting the True Positives and True Negatives.
-However, if we take under consideration the the majority of the churn values are 'no', we notice that by this approach the model,
-seems to not get affected by the majority class. It has the lowest recall for the 'No' class compared to the rest of our models (`r rounding_two_decimals_percentage(98/(98+18))`%)
+However, if we take under consideration that the majority of the churn values are 'No', we notice that by this approach the model
+seems to be less affected by the majority class, since has assigned less values as 'No'. It has the lowest recall for the 'No' class compared to the rest of our models (`r rounding_two_decimals_percentage(rf_matrix_comp[1,1]/(rf_matrix_comp[1,1]+rf_matrix_comp[2,1]))`%).
 
 The first graph below is an approach to show the resulting classification rule, as a scatter plot of the two first principal components colored by the predicted class,
 while the second is colored by the actual class.
