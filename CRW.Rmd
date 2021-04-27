@@ -110,18 +110,18 @@ plot_scatter <- function(data = df_tele,
                             "no" = color_2))
 }
 
-get_legend<-function(myggplot){
-  tmp <- ggplot_gtable(ggplot_build(myggplot))
-  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
-  legend <- tmp$grobs[[leg]]
-  return(legend)
-}
+# get_legend<-function(myggplot){
+#     
+# # https://stackoverflow.com/questions/12539348/ggplot-separate-legend-and-plot
+#   tmp <- ggplot_gtable(ggplot_build(myggplot))
+#   leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+#   legend <- tmp$grobs[[leg]]
+#   return(legend)
+# }
 
 rounding_two_decimals_percentage<- function(x){
   round(x*100, 2)
 }
-  
-# https://stackoverflow.com/questions/12539348/ggplot-separate-legend-and-plot
 ```
 # Machine Learning Task
 
@@ -161,7 +161,7 @@ From **table 2** above we can notice that there is a difference in the means of 
 customers who switched to another telecommunication provider.
 
 Furthermore it is important to say, that we have an unbalanced data set, since 
-the customers who switched to a different provider represent only the `r 103/500*100`% of our sample.
+the customers who switched to a different provider represent only the `r rounding_two_decimals_percentage(103/500)`% of our sample.
 An unbalanced data set can affect our model performance. Models trained on unbalanced 
 datasets usually suffer from poor accuracy when have to generalize, since the 
 algorithm has fewer examples of the minority class, thus will be more biased towards the majority class. 
@@ -275,15 +275,38 @@ df_train_tele_norm$churn <- df_train_tele$churn
 
 df_test_tele_norm <- normalize(df_test_tele[,-5])
 df_test_tele_norm$churn <- df_test_tele$churn
-
 ```
+
+Firstly we are going to use the plain **knn()** function to make predictions, and
+then compare it with the leave-one-out cross-validation method.
+
+```{r vanilla_knn, echo=FALSE}
+library(class)
+knn_1 <- knn(train = df_train_tele_norm[,-5], 
+                      test = df_test_tele_norm[,-5], 
+                      cl=df_train_tele_norm$churn, 
+                      k=1)
+knn_1_accuracy <- mean(knn_1 == df_test_tele_norm$churn)
+knn_1_error <- mean(knn_1 != df_test_tele_norm$churn)
+
+knn_1_conf_matrix <- table(knn_1, df_test_tele_norm$churn)
+
+rownames(knn_1_conf_matrix) <- c("No","Yes")
+kable(knn_1_conf_matrix,
+       col.names = c('No','Yes'),
+      caption = 'Confusion Matrix for k=1')
+```
+The test error for the KNN algorithm for $k=1$ is `r rounding_two_decimals_percentage(knn_1_error)`%.
+We notice that the algorithm struggles to predict correctly those who switched provider (true positives), while the majority of 
+the values are assigned as no, resulting 31 false negatives for k = 1, thus a recall of
+of only `r rounding_two_decimals_percentage(3/(3+31))`%.<br>That is an issue resulted from the imbalance of our set.
+
 In order to find the optimal value of $k$, we are going to use the leave-one-out 
 cross-validation for the training data set.
 
 According to the graph below, for k=1 or k=7 we have the same error,
-however it is important to check the confusion matrix.
+however it is important to check the confusion matrices.
 ```{r cross_validation, include=FALSE}
-library(class)
 set.seed(1)
 cross_knn_error <- c()
 error <- c()
@@ -312,44 +335,42 @@ abline(h = min(cross_knn_error), col = "darkorange", lty = 3)
 
 ```{r knn_with_best_k, echo=FALSE}
 set.seed(1)
-knn_1 <- knn(train = df_train_tele_norm[,-5], 
-                      test = df_test_tele_norm[,-5], 
-                      cl=df_train_tele_norm$churn, 
-                      k=1)
+cross_knn_7 <- knn.cv(df_train_tele_norm[,-5], 
+                      df_train_tele_norm[,5], 
+                      k = 7, 
+                      l = 0, 
+                      prob = FALSE, 
+                      use.all = TRUE)
+cross_knn_7_error <- mean(cross_knn_7 != df_train_tele_norm[,5])
+cross_knn_7_accuracy <- mean(cross_knn_7 == df_train_tele_norm[,5])
+cross_knn_7_conf_matrix <- table(cross_knn_7, df_train_tele_norm[,5])
 
 
-knn_1_accuracy <- mean(knn_1 == df_test_tele_norm$churn)
-knn_1_error <- mean(knn_1 != df_test_tele_norm$churn)
+cross_knn_1 <- knn.cv(df_train_tele_norm[,-5], 
+                      df_train_tele_norm[,5], 
+                      k = 1, 
+                      l = 0, 
+                      prob = FALSE, 
+                      use.all = TRUE)
+cross_knn_1_error <- mean(cross_knn_1 != df_train_tele_norm[,5])
+cross_knn_1_conf_matrix <- table(cross_knn_1, df_train_tele_norm[,5])
 
-knn_7 <- knn(train = df_train_tele_norm[,-5], 
-                test = df_test_tele_norm[,-5], 
-                cl=df_train_tele_norm$churn, 
-                k=7)
+rownames(cross_knn_7_conf_matrix) <- c("No","Yes")
+kable(cross_knn_7_conf_matrix,
+       col.names = c('No','Yes'),
+      caption = 'Confusion Matrix for k=7')
 
-knn_7_accuracy <- mean(knn_7 == df_test_tele_norm$churn)
-knn_7_error <- mean(knn_7 != df_test_tele_norm$churn)
-
-knn_1_conf_matrix <- table(knn_1, df_test_tele_norm$churn)
-knn_7_conf_matrix <- table(knn_7, df_test_tele_norm$churn)
-
-rownames(knn_1_conf_matrix) <- c("No","Yes")
-kable(knn_1_conf_matrix,
+rownames(cross_knn_1_conf_matrix) <- c("No","Yes")
+kable(cross_knn_1_conf_matrix,
        col.names = c('No','Yes'),
       caption = 'Confusion Matrix for k=1')
-
-rownames(knn_7_conf_matrix) <- c("No","Yes")
-kable(knn_7_conf_matrix,
-       col.names = c('No','Yes'),
-      caption = ' Confusion Matrix for k=7')
+cross_knn_7_error
 ```
-We notice that for the both values of k, the algorithm struggles to predict the
-correct the those who switched provider (true positives), while the majority of 
-the values are assigned as no, resulting 31 false negatives for k = 1, and 32 for
-k = 7.<br>That is an issue resulted from the imbalance of our set.
 
-For both values of k, the test error is `r rounding_two_decimals_percentage(knn_1_error)`%. However, despite the fact 
-that for $k=1$ the model predicts better the true positives (those who switched providers),
-fewer neighbors corresponds to high model complexity (Müller & Guido, 2017), 
+By calculating using the LOOCV, for both values of $k$, the test error is `r rounding_two_decimals_percentage(cross_knn_7_error)`%.
+We notice that it performs really better compared to the simple KNN case. However, despite the fact 
+that for $k=1$ the model predicts better the true positives (those who switched providers) resulting a recall `r rounding_two_decimals_percentage(42/(42+27))`,
+fewer $k$-neighbors correspond to higher model complexity (Müller & Guido, 2017), 
 meaning that our model might not generalize. Thus we would prefer the value for
 $k=7$.
 
@@ -396,11 +417,10 @@ kable(table(bag_tree_pred, df_test_tele[,5]),
       caption = 'ConfMatrix for randomForest')
 ```
 
-We notice that the random forest performs better compared to the KNN algorithm. The test error for KNN is `r rounding_two_decimals_percentage(knn_7_error)`%,
-while for rf test error is only `r rounding_two_decimals_percentage(bag_tree_train_error)`%, and thus is accuracy `r rounding_two_decimals_percentage(bag_tree_train_acc)`%.
-We notice that the rf performed much better predicting those who switched providers (True Positives), having a recall of `r rounding_two_decimals_percentage(29/(29+5))`%.
-The KNN scored very poorly, on predicting those who switched providers, predicting correctly
-only 3 out of the 34, resulting a recall of only `r rounding_two_decimals_percentage(2/(2+32))`%.
+We notice that the random forest performs better compared to the KNN models. The test error for the vanilla KNN with $k=1$ is `r rounding_two_decimals_percentage(knn_1_error)`%, for the LOOCV KNN for $k=7$ is `r rounding_two_decimals_percentage(cross_knn_7_error)`
+while for rf test error is only `r rounding_two_decimals_percentage(bag_tree_train_error)`%, and thus its accuracy is `r rounding_two_decimals_percentage(bag_tree_train_acc)`%.
+We notice that the rf performed much better predicting those who switched providers (True Positives), having a recall of `r rounding_two_decimals_percentage(29/(29+5))`%, compared to LOOCV KNN with recall = `r rounding_two_decimals_percentage(33/(33+36))`.
+In general both KNN models, scored very poorly, on predicting those who switched providers. That derives from the unbalance of our dataset.
 
 ## Machine Learning Part (e)
 
@@ -423,7 +443,8 @@ new_variables$churn <- as.factor(df_tele$churn)
 p<-new_variables %>%
   ggplot()+
   geom_point(aes(x=Comp.1, y = Comp.2, color=churn)) +
-  labs(x = "First Principal Component",
+  labs(title = 'Comp.1 v Comp.2',
+       x = "First Principal Component",
        y = "Second Principal Component") +
   coord_fixed(ratio = 1)
 p
@@ -431,9 +452,32 @@ p
 The information preserved in this plot equals to the proportion of the variances 
 of the two components (Comp.1 and Comp.2) so is 73.5%
 
+## First two principal components interpretetion
+
 ```{r, echo=FALSE}
 biplot(tele_pca, xlim=c(-0.1,0.15), ylim=c(-0.13,0.15))
 ```
+We notice that the **biplot** function does not produce as clean plot, to this end
+for interpreting the first two principal components we implemented the **fviz_pca_biplot**,
+and **fviz_pca_var** functions from the **factorextra** package, since they produce a cleaner graph.
+
+```{r, echo=FALSE}
+library(factoextra)
+fviz_pca_var(tele_pca)
+fviz_pca_biplot(tele_pca, geom = 'point')
+```
+From the graph above notice that following:
+
+1. The more parallel to a principal component axis is a vector, the more it contributes to that principal component. 
+Thus, the variables **upload** and **webget** have very high (positive) contribution on the first principal component (the highest contribution is due to **webget**), while the variables **enqcount** and **callwait** appear not to contribute at all.
+
+2. On the other hand, the variables **enqcount** and **callwait** have very high (negative) contribution on the second principal component,  
+while the variables **upload** and **webget** appear not to contribute at all.
+
+3. The longer the vector, the more variability of this variable is represented by the two displayed principal components. The variables  **upload** and **webget** are longer than the **enqcount** and **callwait**, indicating that **upload** and **webget** that more variability of those variables is presented by these two principal components, compared to the other two variables.
+
+4. When two vectors form a small angle between them, it represents that the two variables are positively correlated. Thus, the pair **upload** - **webget**, 
+and the pair **enqcount** - **callwait** are positively correlated. However the variables those two pairs have no correlation between them, since their respective vectors, form about a 90 degrees angle. 
 
 ## Machine Learning Part (f)
 ```{r random_forest_with_comp1_comp2, echo=FALSE}
@@ -455,7 +499,16 @@ kable(table(comp_forest_pred, comp_df_test[,3]),
       caption = 'Confusion matrix rf with components')
 ```
 
-The test OOB error of random forest is `r rounding_two_decimals_percentage(comp_forest_error)`%.
+The test error of random forest is `r rounding_two_decimals_percentage(comp_forest_error)`%, 
+which is worse than the test error obtained from the random forest which used the 
+bagging method (test error `r rounding_two_decimals_percentage(bag_tree_train_error)`%).
+
+In general we notice that, in this case the algorithm performs poorer in predicting the True Positives and True Negatives.
+However, if we take under consideration the the majority of the churn values are 'no', we notice that by this approach the model,
+seems to not get affected by the majority class. It has the lowest recall for the 'No' class compared to the rest of our models (`r rounding_two_decimals_percentage(98/(98+18))`%)
+
+The first graph below is an approach to show the resulting classification rule, as a scatter plot of the two first principal components colored by the predicted class,
+while the second is colored by the actual class.
 
 ```{r visulization_of_classification, echo=FALSE}
 comp_df_test$predictions <-comp_forest_pred
