@@ -168,13 +168,6 @@ upload_box <- plot_boxplot(y=upload, y_lab = 'Upload speed')
 webget_box <- plot_boxplot(y=webget, y_lab='Mean time to load')
 enqcount_box <- plot_boxplot(y=enqcount, y_lab='Times called')
 callwait_box <- plot_boxplot(y=callwait, y_lab='Waiting time')
-
-# upload_webget_scatter <- plot_scatter(x = upload, y = webget, x_lab = 'Upload speed', y_lab = 'mean load time')
-# upload_callwait_scatter <- plot_scatter(x = upload, y = callwait,  x_lab = 'Upload speed', y_lab = 'Wait time')
-# webget_callwait_scatter <- plot_scatter(x = webget, y = callwait, x_lab = 'Mean load time', y_lab = 'Wait time')
-# enqcount_callwait_scatter <- plot_scatter(x = enqcount, y= callwait, x_lab = 'Enquiry count', y_lab='Wait time')
-# enqcount_webget_scatter <- plot_scatter(x = enqcount, y= webget, x_lab = 'Enquiry count', y_lab='Mean time to load a webpage')
-
 ```
 ### Data Visualization
 
@@ -182,8 +175,6 @@ callwait_box <- plot_boxplot(y=callwait, y_lab='Waiting time')
 
 ```{r ploting_hists, echo=FALSE, message=FALSE }
 grid_arrange_shared_legend(upload_hist, webget_hist, enqcount_hist, callwait_hist, nrow = 2, ncol = 2)
-# grid_arrange_shared_legend(upload_webget_scatter, upload_callwait_scatter, webget_callwait_scatter, enqcount_callwait_scatter,nrow = 2, ncol = 2)
-# enqcount_webget_scatter
 ```
 
 
@@ -211,21 +202,44 @@ From the boxplots we notice the below:
 indicating that overall there is a small degree of variation of their upload speeds. 
 Those who have switched provider, have a higher variance of upload speed. 
 Furthermore it is clear that those who have switched tend to have higher upload speeds, 
-while their mean value is about 2.5 points higher, and the max observed value is about 3 points greater from the max speed of the other group.
+while their mean value is about 2.5 points higher, and the max observed value is 
+about 3 points greater from the max speed of the other group. Also the customers 
+falling within the IQR for the 'no' class, indicates that 50% of them have speed 
+between about 7.5 and 12.5, while for the 'yes' class from about 11 (which is 
+almost the media of the 'no' class) to above 15. For both classes upload speeds 
+below 5 have been reported.
 
 2. We notice that the boxplot indicating the mean time to load a webpage is too 
-narrow (whiskers include), for the group who stayed in the company, indicating a very small variance. In more details the 75%
-of this group witness mean waiting time about 180-400. Their appear to be a few outlines at the value 1000. 
-On the other hand we notice, that the loading time varies more for those who switched providers, since 50% of them experience
-loading time from about 380 to 700. We can clearly state that the group who switched provider have greater waiting times.
+narrow (whiskers included), for the group who stayed in the company, indicating 
+a very small variance. In more details the 75% of this group witness mean waiting 
+time about 180-400. Their appear to be a few outlines at the value 1000. 
+On the other hand we notice, that the loading time varies more for those who 
+switched providers, since 50% of them experience loading time from about 380 to 700. 
+The upper quartile of the 'no' class ends almost where the lower quartile of the 'yes' class starts. 
+We can clearly state that the group who switched provider have greater waiting 
+times, as the greater median, mean and previous mentioned analysis indicates.
 
-3. Those who have not switched provider, have contracted less times the company in average (3.13), compare to those who have (4.36).
-This can be explained, because customers facing connection issues tend to call more, and if their issues are not being solved they tend to switch providers. Also we notice that the max times someone have called the company is 7 times. Furthermore the boxplot for the group who switched
+3. Those who have not switched provider, have contracted less times the company 
+in average (3.13), compare to those who have (4.36). This can be explained, because 
+customers facing connection issues tend to call more, and if their issues are not 
+being solved they tend to switch providers. Also we notice that the max times someone 
+have called the company is 7 times. Furthermore the boxplot for the group who switched
 provider have no upper whisker, since the limit of the IQR is the same of the upper limit of the values. 
 This can be explained by the extreme skewness of the data (the majority of the values are 7).
+Finally we notice that there are some customers in both classes who have never called, 
+while there are significant less from 'no' class who have called more than 5 times 
+compared to the 'yes'. The IQR range of the 'no' class is between 2 - 5 calls, 
+while for the 'yes' from 2-7. In general we can argue that those who switched provider 
+tend to call more times.
 
-5. There appears not to be any great difference of the waiting time between the two groups, while the median seems the same (8). The IQR of those who switched provider, is little longer, and the whiskers as well, indicating higher variation. The max value for those who switched is about 15, while for the other group 12.5. Both groups show some outlines for the value of 0, indicating that many customers did not waited (maybe because they never called)
-to be attended by a customer service operator.
+5. There appears not to be any great difference of the waiting time between the 
+two groups, while the median seems the same (8). The IQR of those who switched provider, 
+is little longer (from 7.5 to 11), and the whiskers as well, indicating higher variation. 
+The max value for those who switched is about 15, while for the other group 12.5. 
+Both groups show some outlines for the value of 0, indicating that many customers did 
+not waited (maybe because they never called) to be attended by a customer service operator.
+In general this feauture appears not to be a signficant factor, however there is a little 
+evidence that those who switched provider tend to have experience longer waiting times.
 
 ## Machine Learning Part (b)
 
@@ -241,22 +255,23 @@ training set, containing 350 randomly chosen data points, and a test set contain
 the remaining 150 data points.
 
 ## Machine Learning Part (c)
-Firstly we are going to use the KNN classifier algorithm to make predictions.
+Firstly we are going to use the $k-Nearest Neighbors (KNN)$ classifier to make predictions.
 
-KNN classifier makes predictions based on the Euclidean distance, thus the scale
-of the variables matter. If we do not scale the data, variables with high variance (wider range),
+The KNN classifier makes predictions based on the distance (Euclidean distance in our case), thus the scale
+of the variables matters. If we do not scale the data, variables with high variance (wider range),
 will effect more the Euclidean distance and will appear to be more important for
 the determination the target value.
 Since we do not know the scales of our variables, its wise to scale our data.
 However, since our variables always get positive numbers as values, we used the 
 max-min normalization. We have to keep in mind normalization does not
-handle the outlines well.
+handle the outlines well, but according to our previous analysis there are not many.
 
 We will use the formula below to normalize each value of our variables (except of the target variable 'churn').
 $$
 x' =\frac{x - min(x)}{max(x)-min(x)}
 $$
 Where:
+
  * $x'$: the normalized value
  * $x$: the original value
 
@@ -464,16 +479,28 @@ fviz_pca_biplot(tele_pca, geom = 'point')
 ```
 From the graph above notice that following:
 
-1. The more parallel to a principal component axis is a vector, the more it contributes to that principal component. 
-Thus, the variables **upload** and **webget** have very high (positive) contribution on the first principal component (the highest contribution is due to **webget**), while the variables **enqcount** and **callwait** almost do not contribute at all.
+1. The more parallel to a principal component axis is a vector, the more it 
+contributes to that principal component. Thus, the variables **upload** and 
+**webget** have very high (positive) contribution on the first principal 
+component (the highest contribution is due to **webget**), while the variables 
+**enqcount** and **callwait** almost do not contribute at all.
 
-2. On the other hand, the variables **enqcount** and **callwait** have very high (negative) contribution on the second principal component,  
-while the variables **upload** and **webget** almost do not contribute at all (**webget** appear to be inline with the x-axis so it will no contribute at all).
+2. On the other hand, the variables **enqcount** and **callwait** have very high 
+(negative) contribution on the second principal component, while the variables 
+**upload** and **webget** almost do not contribute at all (**webget** appear to 
+be inline with the x-axis so it will no contribute at all).
 
-3. The longer the vector, the more variability of this variable is represented by the two displayed principal components. The variables  **upload** and **webget** are longer than the **enqcount** and **callwait**, indicating that more variability of the former variables is presented by these two principal components, compared to the other two variables.
+3. The longer the vector, the more variability of this variable is represented by 
+the two displayed principal components. The variables  **upload** and **webget** 
+are longer than the **enqcount** and **callwait**, indicating that more variability 
+of the former variables is presented by these two principal components, compared 
+to the other two variables.
 
-4. When two vectors form a small angle between them, it represents that the two variables are positively correlated. Thus, the pair **upload** - **webget**, 
-and the pair **enqcount** - **callwait** are positively correlated. However the variables those two pairs have no correlation between them, since their respective vectors, form about a 90 degrees angle. 
+4. When two vectors form a small angle between them, it represents that the two 
+variables are positively correlated. Thus, the **upload** and **webget** are 
+positively correlated, as well as the  **enqcount** and **callwait**. However as 
+the graph indicates **upload** and **webget** with **enqcount** and **callwait** have no correlation 
+between them, since their vectors form about a 90 degrees angle. 
 
 ## Machine Learning Part (f)
 ```{r random_forest_with_comp1_comp2, echo=FALSE}
@@ -506,7 +533,7 @@ However, if we take under consideration that the majority of the churn values ar
 seems to be less affected by the majority class, since has assigned less values as 'No'. It has the lowest recall for the 'No' class compared to the rest of our models (`r rounding_two_decimals_percentage(rf_matrix_comp[1,1]/(rf_matrix_comp[1,1]+rf_matrix_comp[2,1]))`%).
 
 The first graph below is an approach to show the resulting classification rule, as a scatter plot of the two first principal components colored by the predicted class,
-while the second is colored by the actual class.
+while the second is colored by the actual class to show a comparison.
 
 ```{r visulization_of_classification, echo=FALSE}
 comp_df_test$predictions <-comp_forest_pred
@@ -527,3 +554,9 @@ ggplot()+
        title = 'Actual') +
   coord_fixed(ratio = 1)
 ```
+
+## References
+
+ * James, G., Witten, D., Hastie, T. and Tibshirani, R., 2017. An introduction to statistical learning. 1st ed. New York: Springer.
+
+ * Muller, A.C. and Guido, S. 2016. Introduction to Machine Learning with Python. 1st ed. Sebastopol, CA: O'Reilly Media, Inc.
