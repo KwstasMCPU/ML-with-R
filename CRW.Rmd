@@ -1,6 +1,6 @@
 ---
 title: "MATH501 Modelling and Analytics for Data Science Coursework"
-author: "Maravegias"
+author: "10546918"
 date: "`r format(Sys.Date(), '%d %B %Y')`"
 output: 
   pdf_document:
@@ -182,14 +182,15 @@ While observing the histogramms we can conclude the following:
 
 1. The majority of the customers, have not switched to another provider. 
 2. The proportion of customers who have switched, tend to have higher upload speed.
-3. The mean time to load a webpage, for he majority of the customers who remained 
-loyal the company, is between 200 - 400. If the value increases, the chance for 
+3. The mean time to load a webpage, for the majority of the customers who remained 
+loyal to the company, is between 200 - 400. If the value increases, the chance for 
 a customer to switch provider increases.
 4. The customers who have called the company 7 times tend to switch provider.
 5. The distribution of waiting time for the both classes is similar, however for
 values above 12.5 there are more customers who switched provider.
 
 **Boxplots**
+
 ```{r plotting_box, echo=FALSE, message=FALSE}
 grid_arrange_shared_legend(upload_box, webget_box, enqcount_box, callwait_box, nrow = 2, ncol = 2)
 detach(df_tele)
@@ -201,45 +202,44 @@ From the boxplots we notice the below:
 1. The boxplot of uploading speed for those who have not switched, is relatively narrow,
 indicating that overall there is a small degree of variation of their upload speeds. 
 Those who have switched provider, have a higher variance of upload speed. 
-Furthermore it is clear that those who have switched tend to have higher upload speeds, 
+Furthermore it is **clear that those who have switched tend to have higher upload speeds**, 
 while their mean value is about 2.5 points higher, and the max observed value is 
 about 3 points greater from the max speed of the other group. Also the customers 
 falling within the IQR for the 'no' class, indicates that 50% of them have speed 
-between about 7.5 and 12.5, while for the 'yes' class from about 11 (which is 
-almost the media of the 'no' class) to above 15. For both classes upload speeds 
+between about 7.5 and 12.5, while for the 'yes' class from about 10 (which is 
+almost the median of the 'no' class) to above 15. For both classes upload speeds 
 below 5 have been reported.
 
 2. We notice that the boxplot indicating the mean time to load a webpage is too 
 narrow (whiskers included), for the group who stayed in the company, indicating 
 a very small variance. In more details the 75% of this group witness mean waiting 
-time about 180-400. Their appear to be a few outlines at the value 1000. 
+time about 180-400. There are few outlines at the value 1000, for both classes. 
 On the other hand we notice, that the loading time varies more for those who 
-switched providers, since 50% of them experience loading time from about 380 to 700. 
-The upper quartile of the 'no' class ends almost where the lower quartile of the 'yes' class starts. 
-We can clearly state that the group who switched provider have greater waiting 
-times, as the greater median, mean and previous mentioned analysis indicates.
+switched providers, since 50% of them experience loading times from about 380 to 700. 
+The upper quartile of the 'no' class ends only a little higher where the lower quartile of the 'yes' class starts. 
+We can clearly state that **the group who switched provider have greater waiting times**, 
+as the greater median, mean and previous mentioned analysis indicates.
 
 3. Those who have not switched provider, have contracted less times the company 
 in average (3.13), compare to those who have (4.36). This can be explained, because 
 customers facing connection issues tend to call more, and if their issues are not 
 being solved they tend to switch providers. Also we notice that the max times someone 
 have called the company is 7 times. Furthermore the boxplot for the group who switched
-provider have no upper whisker, since the limit of the IQR is the same of the upper limit of the values. 
-This can be explained by the extreme skewness of the data (the majority of the values are 7).
+provider have no upper whisker, since the limit of the IQR is the same with the max observed value. 
+This can be explained by the extreme skewness of the data (the majority of the values of this class are 7).
 Finally we notice that there are some customers in both classes who have never called, 
 while there are significant less from 'no' class who have called more than 5 times 
 compared to the 'yes'. The IQR range of the 'no' class is between 2 - 5 calls, 
-while for the 'yes' from 2-7. In general we can argue that those who switched provider 
-tend to call more times.
+while for the 'yes' from 2-7. In general **we can argue that those who switched provider tend to call more times**.
 
 5. There appears not to be any great difference of the waiting time between the 
-two groups, while the median seems the same (8). The IQR of those who switched provider, 
+two groups, while the median seems the same (about 8). The IQR of those who switched provider, 
 is little longer (from 7.5 to 11), and the whiskers as well, indicating higher variation. 
 The max value for those who switched is about 15, while for the other group 12.5. 
 Both groups show some outlines for the value of 0, indicating that many customers did 
 not waited (maybe because they never called) to be attended by a customer service operator.
-In general this feauture appears not to be a signficant factor, however there is a little 
-evidence that those who switched provider tend to have experience longer waiting times.
+In general **callwait appears not to be a significant factor**, however there is a little 
+evidence that those who switched provider tend to have experienced longer waiting times.
 
 ## Machine Learning Part (b)
 
@@ -290,7 +290,7 @@ df_test_tele_norm$churn <- df_test_tele$churn
 Firstly we are going to use the plain **knn()** function to make predictions, and
 then compare it with the leave-one-out cross-validation method.
 
-```{r vanilla_knn, echo=FALSE}
+```{r vanilla_knn, echo=TRUE}
 library(class)
 knn_1 <- knn(train = df_train_tele_norm[,-5], 
                       test = df_test_tele_norm[,-5], 
@@ -309,7 +309,7 @@ kable(knn_1_conf_matrix,
 The test error for the KNN algorithm for $k=1$ is `r rounding_two_decimals_percentage(knn_1_error)`%.
 We notice that the algorithm struggles to predict correctly those who switched provider (true positives), while the majority of 
 the values are assigned as no, resulting 31 false negatives, thus a recall of
-of only `r rounding_two_decimals_percentage(knn_1_conf_matrix[2,2]/(knn_1_conf_matrix[2,2]+knn_1_conf_matrix[1,2]))`%. This issue can be explained by the imbalance of our set.
+of only `r rounding_two_decimals_percentage(knn_1_conf_matrix[2,2]/(knn_1_conf_matrix[2,2]+knn_1_conf_matrix[1,2]))`%. This issue can be explained by the imbalance of our data set.
 
 ### Leave-One-Out Cross-Validation
 In order to find the optimal value of $k$, we are going to use the leave-one-out 
@@ -317,7 +317,7 @@ cross-validation for the training data set.
 
 According to the graph below, for $k=1$ or $k=7$ we have the same error,
 however it is important to check the confusion matrices.
-```{r cross_validation, include=FALSE}
+```{r cross_validation, echo=TRUE}
 set.seed(1)
 cross_knn_error <- c()
 error <- c()
@@ -344,7 +344,7 @@ abline(h = min(cross_knn_error), col = "darkorange", lty = 5)
 ```
 
 
-```{r knn_with_best_k, echo=FALSE}
+```{r knn_with_best_k, echo=TRUE}
 set.seed(1)
 cross_knn_7 <- knn.cv(df_train_tele_norm[,-5], 
                       df_train_tele_norm[,5], 
@@ -355,7 +355,6 @@ cross_knn_7 <- knn.cv(df_train_tele_norm[,-5],
 cross_knn_7_error <- mean(cross_knn_7 != df_train_tele_norm[,5])
 cross_knn_7_accuracy <- mean(cross_knn_7 == df_train_tele_norm[,5])
 cross_knn_7_conf_matrix <- table(cross_knn_7, df_train_tele_norm[,5])
-
 
 cross_knn_1 <- knn.cv(df_train_tele_norm[,-5], 
                       df_train_tele_norm[,5], 
@@ -379,8 +378,8 @@ kable(cross_knn_1_conf_matrix,
 
 By calculating using the LOOCV, for both values of $k$, the test error is `r rounding_two_decimals_percentage(cross_knn_7_error)`%.
 We notice that it performs really better compared to the simple KNN case. However, despite the fact 
-that for $k=1$ the model predicts better the true positives (those who switched providers) resulting a recall `r rounding_two_decimals_percentage(cross_knn_1_conf_matrix[2,2]/(cross_knn_1_conf_matrix[2,2]+cross_knn_1_conf_matrix[1,2]))`% compared to the `r rounding_two_decimals_percentage(cross_knn_7_conf_matrix[2,2]/(cross_knn_7_conf_matrix[2,2]+cross_knn_7_conf_matrix[1,2]))`%,
-fewer $k$-neighbors correspond to higher model complexity (Müller & Guido, 2017), 
+that for $k=1$ the model predicts better the true positives (those who switched providers) resulting a recall `r rounding_two_decimals_percentage(cross_knn_1_conf_matrix[2,2]/(cross_knn_1_conf_matrix[2,2]+cross_knn_1_conf_matrix[1,2]))`% compared to the `r rounding_two_decimals_percentage(cross_knn_7_conf_matrix[2,2]/(cross_knn_7_conf_matrix[2,2]+cross_knn_7_conf_matrix[1,2]))`% for $k=7$,
+fewer $k-neighbors$ correspond to higher model complexity (Müller & Guido, 2017), 
 meaning that our model might not generalize. Thus we would prefer the value for
 $k=7$.
 
@@ -393,7 +392,7 @@ We are going to implement the random forest (bagging) method to construct anothe
 The figures below shows us the importance of the variables for predicting churn 
 using the random forest classifier.
 
-```{r machine_learning_part_d, echo=FALSE, warning=FALSE, message=FALSE}
+```{r machine_learning_part_d, warning=FALSE, message=FALSE}
 library(randomForest)
 set.seed(1)
 bag_tree_train <-randomForest(formula =  df_train_tele[,5] ~., 
@@ -412,13 +411,13 @@ thus the more the accuracy decrease the more important this variable is.
  * **Mean decrease Gini** shows the total decrease in node impurity resulted by the splits
 of a given variable, averaged over all trees. If a variable is useful. it tends to split a node into pure single class nodes. Thus, removing such variable, results a decrease in the average purity gained due to this variable. 
 
-We notice that webget and enqcount results the most mean decrease accuracy and gini.
-Also, upload scores higher in the mean decrease accuracy than callwait, while callwait scores better in gini, but with smaller spread.  
-In overall, we could argue that webget and enqcount are the most significant variables for classifying with random forest if a customer will switch provider.
+We notice that **webget** and **enqcount** results the most mean decrease accuracy and gini.
+Also, **upload** scores higher in the mean decrease accuracy than **callwait**, while **callwait** scores better in gini, but with smaller spread.  
+In overall, we could argue that **webget** and **enqcount** are the most significant variables for classifying with random forest if a customer will switch provider.
 
 ### Making predictions
 
-```{r random_forest_acc, echo=FALSE}
+```{r random_forest_acc, echo=TRUE}
 bag_tree_pred <- predict(bag_tree_train, newdata = df_test_tele[,-5])
 bag_tree_train_acc <- mean(bag_tree_pred == df_test_tele[,5])
 bag_tree_train_error <- mean(bag_tree_pred != df_test_tele[,5])
@@ -427,10 +426,10 @@ kable(rf_matrix,
       caption = 'ConfMatrix for randomForest')
 ```
 
-We notice that the random forest performs better compared to the KNN models. The test error for the vanilla KNN with $k=1$ is `r rounding_two_decimals_percentage(knn_1_error)`%, for the LOOCV KNN for $k=7$ is `r rounding_two_decimals_percentage(cross_knn_7_error)`
+We notice that the random forest performs better compared to the KNN models. The test error for the vanilla KNN with $k=1$ is `r rounding_two_decimals_percentage(knn_1_error)`%, for the LOOCV KNN for $k=7$ is `r rounding_two_decimals_percentage(cross_knn_7_error)`%
 while for random forest the test error is only `r rounding_two_decimals_percentage(bag_tree_train_error)`%, and thus its accuracy is `r rounding_two_decimals_percentage(bag_tree_train_acc)`%.
-We notice that the random forest performed much better predicting those who switched providers (True Positives), having a recall of `r rounding_two_decimals_percentage(rf_matrix[2,2]/(rf_matrix[2,2]+rf_matrix[1,2]))`%, compared to LOOCV KNN with recall =  47.83%.
-In general both KNN models, scored very poorly, on predicting those who switched providers. That might derives from the unbalance of our dataset.
+We notice that the random forest performed much better predicting those who switched providers (True Positives), having a recall of `r rounding_two_decimals_percentage(rf_matrix[2,2]/(rf_matrix[2,2]+rf_matrix[1,2]))`%, compared to LOOCV KNN with $k=7$ with recall =  47.83%.
+In general both KNN models, scored very poorly, on predicting those who switched providers. That might derives from the unbalance of our data set.
 
 ## Machine Learning Part (e)
 
@@ -477,7 +476,7 @@ library(factoextra)
 fviz_pca_var(tele_pca)
 fviz_pca_biplot(tele_pca, geom = 'point')
 ```
-From the graph above notice that following:
+From the graphs above we notice that following:
 
 1. The more parallel to a principal component axis is a vector, the more it 
 contributes to that principal component. Thus, the variables **upload** and 
@@ -503,7 +502,7 @@ the graph indicates **upload** and **webget** with **enqcount** and **callwait**
 between them, since their vectors form about a 90 degrees angle. 
 
 ## Machine Learning Part (f)
-```{r random_forest_with_comp1_comp2, echo=FALSE}
+```{r random_forest_with_comp1_comp2, echo=TRUE}
 # splitting the data
 comp_df_train <- new_variables[df_subset,]
 comp_df_test <- new_variables[-df_subset,]
@@ -526,14 +525,14 @@ kable(rf_matrix_comp,
 ```
 
 The test error of random forest is `r rounding_two_decimals_percentage(comp_forest_error)`%, 
-which is worse than the test error obtained from the random forest which used all the variables (test error `r rounding_two_decimals_percentage(bag_tree_train_error)`%).
+which is worse than the test error obtained from the random forest which used all the variables (test error `r rounding_two_decimals_percentage(bag_tree_train_error)`% part **d**).
 
 In general we notice that, in this case the algorithm performs poorer in predicting the True Positives and True Negatives.
 However, if we take under consideration that the majority of the churn values are 'No', we notice that by this approach the model
 seems to be less affected by the majority class, since has assigned less values as 'No'. It has the lowest recall for the 'No' class compared to the rest of our models (`r rounding_two_decimals_percentage(rf_matrix_comp[1,1]/(rf_matrix_comp[1,1]+rf_matrix_comp[2,1]))`%).
 
-The first graph below is an approach to show the resulting classification rule, as a scatter plot of the two first principal components colored by the predicted class,
-while the second is colored by the actual class to show a comparison.
+The first graph below is an approach to show the resulting classification rule of this random forest, as a scatter plot of the two first principal components colored by the predicted class,
+while the second is colored by the actual values to show a comparison.
 
 ```{r visulization_of_classification, echo=FALSE}
 comp_df_test$predictions <-comp_forest_pred
