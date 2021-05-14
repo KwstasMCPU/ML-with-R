@@ -1,4 +1,4 @@
-# Exercises done within the machine learning and data modeling course of my MSc in Data Science
+# Exercises of ML and statistical modeling module of my MSc in Data Science
 
 The data were obtained from the https://www.ofcom.org.uk/, and contain information about 500 customers of a telecom company<br>
 In more details:
